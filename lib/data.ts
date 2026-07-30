@@ -79,49 +79,42 @@ export const ABOUT_IDENTITY_CARDS = [
 
 export const JOURNEY_MILESTONES = [
   {
-    year: "2021",
+    year: "2023",
     title: "Started Programming",
     subtitle: "Foundations & Curiosity",
     description: "Mastered core algorithms, data structures, and Python scripting fundamentals. Built first automation utilities.",
     category: "Genesis"
   },
   {
-    year: "2022",
-    title: "Built Desktop Applications",
-    subtitle: "Software Engineering Practice",
-    description: "Designed custom desktop interfaces, local database architectures, and modular business management tools.",
-    category: "Software"
-  },
-  {
-    year: "2023",
+    year: "2025",
     title: "Created AI Assistant",
     subtitle: "NLP & Conversational Agents",
     description: "Developed context-aware conversational bots leveraging speech processing, vector search, and local LLMs.",
     category: "AI"
   },
   {
-    year: "2024",
+    year: "2025",
     title: "Developed Business Management Portal",
     subtitle: "Production Enterprise Software",
     description: "Architected a full-featured sales and order management workflow system with real-time tracking and metrics.",
     category: "Product"
   },
   {
-    year: "2024",
+    year: "2026",
     title: "Completed Analytics Internship",
     subtitle: "Enterprise Data Pipelines",
     description: "Extracted insights from large business datasets, engineered Power BI reports, and automated ETL operations.",
     category: "Data"
   },
   {
-    year: "2025",
+    year: "2026",
     title: "Built Machine Learning Systems",
     subtitle: "Computer Vision & Predictive Models",
     description: "Trained vision models for object detection and deployed serverless inference pipelines with high accuracy.",
     category: "Machine Learning"
   },
   {
-    year: "2025",
+    year: "2026",
     title: "Exploring Full Stack Development",
     subtitle: "Modern Web Stack (Next.js / TypeScript)",
     description: "Mastered modern Jamstack architectures, reactive component design, server components, and Tailwind styling.",
@@ -272,12 +265,12 @@ export const WHAT_I_BUILD_CARDS = [
 ];
 
 export const STATS = [
-  { label: "Projects Completed", value: 24, suffix: "+" },
-  { label: "GitHub Repositories", value: 38, suffix: "" },
-  { label: "Coding Hours", value: 3200, suffix: "+" },
-  { label: "AI Models Trained", value: 65, suffix: "+" },
-  { label: "Technologies Mastered", value: 25, suffix: "+" },
-  { label: "Years Engineering", value: 4, suffix: "+" }
+  { label: "Projects Completed", value: 4, suffix: "+" },
+  { label: "GitHub Repositories", value: 10, suffix: "" },
+  { label: "Coding Hours", value: 300, suffix: "+" },
+  { label: "Technologies Mastered", value: 10, suffix: "+" },
+  { label: "Years Engineering", value: 2, suffix: "+" },
+  { label: "Internship Completed", value: 1, suffix: "" }
 ];
 
 export const PHILOSOPHY_QUOTES = [

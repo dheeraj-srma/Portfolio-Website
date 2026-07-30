@@ -54,11 +54,11 @@ export function StatsSection() {
             transition={{ duration: 0.4, delay: index * 0.08 }}
           >
             <SpotlightCard className="flex flex-col items-center justify-center p-6 text-center h-full hover:border-blue-500/40">
-              <span className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-300 to-pink-400">
+              <span className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-300 to-pink-400 block mb-2">
                 <CountUpNumber value={stat.value} suffix={stat.suffix} />
               </span>
-              <span className="text-xs font-mono text-gray-400 mt-2 tracking-tight">
-                {stat.label}
+              <span className="text-xs font-mono text-gray-400 tracking-tight whitespace-pre-line block">
+                {stat.label.trim()}
               </span>
             </SpotlightCard>
           </motion.div>
