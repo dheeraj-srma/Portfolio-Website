@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Send, CheckCircle2, MessageSquare, Compass, Copy } from "lucide-react";
+import { Mail, Send, CheckCircle2, MessageSquare, Copy, Sparkles } from "lucide-react";
 import { GithubIcon, LinkedinIcon, InstagramIcon } from "@/components/common/Icons";
 import { PERSONAL_INFO } from "@/lib/data";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
@@ -24,7 +24,6 @@ export function ContactSection() {
     if (!formState.name || !formState.email || !formState.message) return;
 
     setLoading(true);
-    // Simulating message submission or mailto fallback
     setTimeout(() => {
       setLoading(false);
       setSubmitted(true);
@@ -69,49 +68,53 @@ export function ContactSection() {
         </motion.p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-        {/* Left Side: Direct Contact Details & Links */}
-        <div className="md:col-span-5 space-y-4">
-          <SpotlightCard className="p-6 space-y-6">
-            <div className="space-y-2">
-              <h3 className="text-lg font-bold text-white tracking-tight">
-                Direct Channels
-              </h3>
-              <p className="text-xs text-gray-400 font-light leading-relaxed">
-                Feel free to email me directly or check out what I'm working on across the web.
-              </p>
-            </div>
+      {/* Synchronized Parallel Two-Panel Grid (Starts and Ends at Same Vertical Level) */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
+        {/* Left Side: Direct Channels (Stretches to match exact height of right form) */}
+        <div className="md:col-span-5 flex flex-col h-full">
+          <SpotlightCard className="h-full p-8 flex flex-col justify-between border border-white/10">
+            {/* Top Block: Title & Direct Email */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-white tracking-tight">
+                  Direct Channels
+                </h3>
+                <p className="text-xs text-gray-400 font-light leading-relaxed">
+                  Feel free to email me directly or check out what I'm working on across the web.
+                </p>
+              </div>
 
-            {/* Email Box */}
-            <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-2">
-              <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">
-                Direct Email
-              </span>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-mono text-white truncate">
-                  {PERSONAL_INFO.email}
+              {/* Email Box */}
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+                <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">
+                  Direct Email
                 </span>
-                <button
-                  onClick={handleCopyEmail}
-                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors shrink-0"
-                  title="Copy email"
-                >
-                  {copied ? <CheckCircle2 size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                </button>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-mono text-white truncate">
+                    {PERSONAL_INFO.email}
+                  </span>
+                  <button
+                    onClick={handleCopyEmail}
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors shrink-0 cursor-pointer"
+                    title="Copy email"
+                  >
+                    {copied ? <CheckCircle2 size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Social / Profiles */}
-            <div className="space-y-2">
+            {/* Bottom Block: Find Me On Links */}
+            <div className="space-y-3 pt-6">
               <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">
                 Find Me On
               </span>
-              <div className="flex flex-col gap-2 font-mono text-xs">
+              <div className="flex flex-col gap-2.5 font-mono text-xs">
                 <a
                   href={PERSONAL_INFO.githubUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-3 rounded-lg bg-white/[0.02] border border-white/10 hover:border-blue-500/30 flex items-center justify-between text-gray-300 hover:text-white transition-colors"
+                  className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-blue-500/30 flex items-center justify-between text-gray-300 hover:text-white transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
                     <GithubIcon size={16} />
@@ -124,7 +127,7 @@ export function ContactSection() {
                   href={PERSONAL_INFO.linkedinUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-3 rounded-lg bg-white/[0.02] border border-white/10 hover:border-blue-500/30 flex items-center justify-between text-gray-300 hover:text-white transition-colors"
+                  className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-blue-500/30 flex items-center justify-between text-gray-300 hover:text-white transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
                     <LinkedinIcon size={16} />
@@ -137,7 +140,7 @@ export function ContactSection() {
                   href={PERSONAL_INFO.instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-3 rounded-lg bg-white/[0.02] border border-white/10 hover:border-pink-500/30 flex items-center justify-between text-gray-300 hover:text-white transition-colors"
+                  className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-pink-500/30 flex items-center justify-between text-gray-300 hover:text-white transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
                     <InstagramIcon size={16} />
@@ -151,62 +154,69 @@ export function ContactSection() {
         </div>
 
         {/* Right Side: Message Form */}
-        <div className="md:col-span-7">
-          <SpotlightCard className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <h3 className="text-lg font-bold text-white tracking-tight mb-2">
-                Send a Note
-              </h3>
-
-              <div className="space-y-1.5">
-                <label htmlFor="name" className="text-xs font-mono text-gray-400 block">
-                  Your Name
-                </label>
-                <input
-                  id="name"
-                  type="text"
-                  required
-                  value={formState.name}
-                  onChange={(e) => setFormState({ ...formState, name: e.target.value })}
-                  placeholder="e.g. Alex Turing"
-                  className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors font-mono"
-                />
+        <div className="md:col-span-7 flex flex-col h-full">
+          <SpotlightCard className="h-full p-8 flex flex-col justify-between border border-white/10">
+            <form onSubmit={handleSubmit} className="flex flex-col justify-between h-full space-y-5">
+              <div>
+                <h3 className="text-xl font-bold text-white tracking-tight mb-2">
+                  Send a Note
+                </h3>
+                <p className="text-xs text-gray-400 font-light">
+                  Drop an inquiry, project proposition, or engineering question.
+                </p>
               </div>
 
-              <div className="space-y-1.5">
-                <label htmlFor="email" className="text-xs font-mono text-gray-400 block">
-                  Your Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  value={formState.email}
-                  onChange={(e) => setFormState({ ...formState, email: e.target.value })}
-                  placeholder="alex@example.com"
-                  className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors font-mono"
-                />
-              </div>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="name" className="text-xs font-mono text-gray-400 block">
+                    Your Name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    required
+                    value={formState.name}
+                    onChange={(e) => setFormState({ ...formState, name: e.target.value })}
+                    placeholder="e.g. Alex Turing"
+                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                  />
+                </div>
 
-              <div className="space-y-1.5">
-                <label htmlFor="message" className="text-xs font-mono text-gray-400 block">
-                  Message
-                </label>
-                <textarea
-                  id="message"
-                  required
-                  rows={4}
-                  value={formState.message}
-                  onChange={(e) => setFormState({ ...formState, message: e.target.value })}
-                  placeholder="What are you building or thinking about? Ask an engineering question or say hello."
-                  className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors font-mono resize-none"
-                />
+                <div className="space-y-1.5">
+                  <label htmlFor="email" className="text-xs font-mono text-gray-400 block">
+                    Your Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    value={formState.email}
+                    onChange={(e) => setFormState({ ...formState, email: e.target.value })}
+                    placeholder="alex@example.com"
+                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="message" className="text-xs font-mono text-gray-400 block">
+                    Message
+                  </label>
+                  <textarea
+                    id="message"
+                    required
+                    rows={4}
+                    value={formState.message}
+                    onChange={(e) => setFormState({ ...formState, message: e.target.value })}
+                    placeholder="What are you building or thinking about? Ask an engineering question or say hello."
+                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors font-mono resize-none"
+                  />
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+                className="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_0_20px_rgba(59,130,246,0.3)] mt-2"
               >
                 {loading ? (
                   <span>Preparing Message...</span>

@@ -46,8 +46,8 @@ export function PhilosophySection() {
 
       {/* Interactive Philosophy Station Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-        {/* Left Side (5 cols): List of 5 Tenets */}
-        <div className="lg:col-span-5 space-y-3">
+        {/* Left Side (5 cols): List of 5 Tenets evenly stretched */}
+        <div className="lg:col-span-5 flex flex-col justify-between h-full gap-3">
           {ENGINEERING_PHILOSOPHY.map((tenet) => {
             const isSelected = tenet.id === selectedId;
             return (
@@ -93,7 +93,7 @@ export function PhilosophySection() {
         </div>
 
         {/* Right Side (7 cols): Deep-Dive Exploration Card */}
-        <div className="lg:col-span-7">
+        <div className="lg:col-span-7 flex flex-col h-full">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTenet.id}
