@@ -190,7 +190,7 @@ export const PROJECTS: ProjectData[] = [
     story: {
       idea: "Wholesale industrial supply businesses often rely on fragmented WhatsApp messages, physical paper order slips, and manual Tally re-entry. The idea was to build a single mobile-first digital portal where salesmen and dealers select items directly from an up-to-date catalog, see stock availability, place validated orders, and instantly generate dispatch slips.",
       whyBuilt:
-        "Dheeraj built this to solve an urgent, real-world operational bottleneck for Nalka Metals. Orders were getting delayed, items were being ordered when out of stock, and calculating price tiers manually was error-prone.",
+        "I built this to solve an urgent, real-world operational bottleneck for Nalka Metals. Orders were getting delayed, items were being ordered when out of stock, and calculating price tiers manually was error-prone.",
       howItWorks:
         "Built with React 19, TypeScript, and Vite on the frontend, with a Supabase PostgreSQL database handling products, dealers, order line items, and transaction logs. When an order is finalized, a client-side jsPDF pipeline formats professional multi-page dispatch orders with SKU codes, tax breakdowns, and payment terms, while syncing state with Google Sheets and Tally data structures.",
       techStack: ["React 19", "TypeScript", "Vite", "Tailwind CSS v4", "Supabase (PostgreSQL)", "jsPDF / AutoTable", "PapaParse"],
@@ -236,7 +236,7 @@ export const PROJECTS: ProjectData[] = [
     story: {
       idea: "Rather than interacting with an AI through a browser tab, AURA was conceived as a persistent, native desktop intelligence assistant that can listen, talk back, view the screen or webcam, and manipulate system functions directly on the host machine.",
       whyBuilt:
-        "Dheeraj wanted to move beyond API wrapper chatbots. He wanted to understand how speech-to-text engines, audio buffers, natural language dispatching, and system automation scripts work together as a continuous, event-driven runtime.",
+        "I wanted to move beyond API wrapper chatbots. I wanted to understand how speech-to-text engines, audio buffers, natural language dispatching, and system automation scripts work together as a continuous, event-driven runtime.",
       howItWorks:
         "The application runs an asynchronous event loop in Python. Audio is captured via PyAudio/SpeechRecognition, transcribed, and parsed for intent. Commands trigger OS actions (application launch, browser control, system telemetry, media control), while contextual questions route to LLM backends with conversation history. Visual inputs can be captured via OpenCV for object/face analysis. Responses are synthesized into speech using pyttsx3 or online neural TTS.",
       techStack: ["Python", "SpeechRecognition", "pyttsx3", "OpenCV", "CustomTkinter", "Threading & Asyncio"],
@@ -283,7 +283,7 @@ export const PROJECTS: ProjectData[] = [
     story: {
       idea: "Tuberculosis remains a major global health challenge where rapid radiological screening can save lives. The goal was to build a complete computer vision pipeline that not only classifies an X-ray as normal, sick, or TB, but also segments the precise lesion locations and projects the attention heatmaps into pseudo-3D space for clinical insight.",
       whyBuilt:
-        "Dheeraj wanted to explore the complete deep learning lifecycle on a non-trivial medical imaging task: from handling messy image annotations, addressing class imbalance, and training segmentation networks, to addressing the black-box problem through Grad-CAM interpretability.",
+        "I wanted to explore the complete deep learning lifecycle on a non-trivial medical imaging task: from handling messy image annotations, addressing class imbalance, and training segmentation networks, to addressing the black-box problem through Grad-CAM interpretability.",
       howItWorks:
         "Chest radiographs from TBX11K are preprocessed (CLAHE contrast enhancement, normalization, spatial resizing). A convolutional classification model distinguishes pathological indicators. Simultaneously, a custom PyTorch U-Net with skip connections predicts binary lesion segmentation masks. Grad-CAM extracts gradients from the final convolutional layer to visualize attention, which is mapped into 3D voxel density plots for spatial visualization.",
       techStack: ["Python", "PyTorch", "Torchvision", "U-Net", "OpenCV", "Matplotlib", "NumPy", "Albumentations"],
@@ -328,7 +328,7 @@ export const PROJECTS: ProjectData[] = [
       { label: "Focus", value: "Empirical Limits of Prediction" }
     ],
     story: {
-      idea: "Stock price prediction is often hyped with exaggerated claims of 'beating the market'. Dheeraj wanted to approach it with scientific honesty: build multiple statistical and machine learning models, train them on real historical data, and rigorously measure where they succeed, where they fail, and why financial markets are fundamentally hard to predict.",
+      idea: "Stock price prediction is often hyped with exaggerated claims of 'beating the market'. I wanted to approach it with scientific honesty: build multiple statistical and machine learning models, train them on real historical data, and rigorously measure where they succeed, where they fail, and why financial markets are fundamentally hard to predict.",
       whyBuilt:
         "To understand time-series modeling from the ground up: autocorrelation, stationarity, look-ahead bias, feature engineering with technical indicators (RSI, MACD, Bollinger Bands), and how LSTM recurrent units handle sequential dependencies compared to classical autoregressive models.",
       howItWorks:

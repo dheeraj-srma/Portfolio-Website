@@ -667,11 +667,11 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
                   </p>
                 </div>
 
-                {/* 2. Why did Dheeraj build it? */}
+                {/* 2. Why I built it */}
                 <div className="space-y-2">
                   <div className="inline-flex items-center gap-2 text-xs font-mono font-semibold text-purple-400 uppercase tracking-wider">
                     <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
-                    <span>02 · Why did Dheeraj build it?</span>
+                    <span>02 · Why I built it</span>
                   </div>
                   <p className="text-sm text-gray-300 leading-relaxed font-light pl-3 border-l-2 border-purple-500/30">
                     {project.story.whyBuilt}

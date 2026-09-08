@@ -133,7 +133,7 @@ export function PhilosophySection() {
 
                 {/* Footnote on execution */}
                 <div className="pt-8 mt-6 border-t border-white/5 flex items-center justify-between text-xs font-mono text-gray-400">
-                  <span>How Dheeraj works</span>
+                  <span>How I work</span>
                   <span className="text-blue-400 flex items-center gap-1">
                     Continuous practice <ArrowRight size={12} />
                   </span>

@@ -27,7 +27,7 @@ export function AboutSection() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight"
         >
-          About Dheeraj
+          About Me
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 15 }}

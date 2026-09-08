@@ -28,77 +28,77 @@ export function HeroSection() {
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center w-full z-10">
         {/* Left Column: Headline, True Positioning, Grounded Statement, CTAs */}
-        <div className="lg:col-span-8 flex flex-col justify-center space-y-8 text-left">
-          {/* Status Badge & GitHub Profile Photo */}
+        <div className="lg:col-span-8 flex flex-col justify-center space-y-7 text-left">
+          {/* Status Badge */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="flex items-center gap-4 sm:gap-5"
+            className="inline-flex items-center gap-2.5 self-start px-3.5 py-1.5 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-md"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-xs font-mono text-gray-300 tracking-wide">
+              Currently building & exploring systems
+            </span>
+          </motion.div>
+
+          {/* Unified Profile, Name & GitHub Info Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6"
           >
             {/* GitHub Profile Photo */}
             <a
               href={PERSONAL_INFO.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="relative group shrink-0 block cursor-pointer"
+              className="relative group shrink-0 block cursor-pointer self-start sm:self-center"
               title="Visit @dheeraj-srma on GitHub"
             >
-              <div className="absolute -inset-0.5 bg-gradient-to-tr from-blue-500 via-purple-500 to-emerald-400 rounded-full blur-[4px] opacity-70 group-hover:opacity-100 transition duration-300" />
+              <div className="absolute -inset-1 bg-gradient-to-tr from-blue-500 via-purple-500 to-emerald-400 rounded-2xl blur-sm opacity-60 group-hover:opacity-100 transition duration-300" />
               <img
                 src={PERSONAL_INFO.avatarUrl}
                 alt={PERSONAL_INFO.name}
-                className="relative h-16 w-16 sm:h-20 sm:w-20 rounded-full object-cover border-2 border-white/20 shadow-xl group-hover:scale-[1.02] transition-transform"
+                className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-2xl object-cover border-2 border-white/20 shadow-2xl group-hover:scale-105 transition-transform"
               />
               <span
-                className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full bg-emerald-500 border-2 border-[#090D16]"
+                className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-500 border-2 border-[#090D16]"
                 title="Active"
               />
             </a>
 
-            <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-md">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span className="text-xs font-mono text-gray-300 tracking-wide">
-                  Currently building & exploring systems
-                </span>
-              </div>
-              <div className="text-xs font-mono text-gray-400 flex items-center gap-2 pl-1">
+            {/* Name, Handle & Roles */}
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+                  {PERSONAL_INFO.name}
+                </h1>
                 <a
                   href={PERSONAL_INFO.githubUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-mono text-blue-400 hover:text-blue-300 transition-colors shadow-sm"
                 >
-                  @dheeraj-srma
+                  <GithubIcon size={13} />
+                  <span>@dheeraj-srma</span>
+                  <span className="text-gray-600">·</span>
+                  <span className="text-gray-400 text-[11px]">GitHub</span>
                 </a>
-                <span className="text-gray-600">·</span>
-                <span className="text-gray-400">GitHub Verified</span>
               </div>
-            </div>
-          </motion.div>
 
-          {/* Simple, Grounded Hero Title */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="space-y-4"
-          >
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.08]">
-              {PERSONAL_INFO.name}
-            </h1>
-
-            {/* True Positioning: Engineering student. AI builder. Software developer. */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-lg sm:text-2xl font-medium text-gray-300">
-              <span className="text-blue-400 font-mono font-semibold">Engineering student.</span>
-              <span className="text-gray-500">·</span>
-              <span className="text-purple-400 font-mono font-semibold">AI builder.</span>
-              <span className="text-gray-500">·</span>
-              <span className="text-emerald-400 font-mono font-semibold">Software developer.</span>
+              {/* True Positioning: Engineering student. AI builder. Software developer. */}
+              <div className="flex flex-wrap items-center gap-2 text-base sm:text-xl font-medium text-gray-300">
+                <span className="text-blue-400 font-mono font-semibold">Engineering student.</span>
+                <span className="text-gray-600">·</span>
+                <span className="text-purple-400 font-mono font-semibold">AI builder.</span>
+                <span className="text-gray-600">·</span>
+                <span className="text-emerald-400 font-mono font-semibold">Software developer.</span>
+              </div>
             </div>
           </motion.div>
 
@@ -164,7 +164,7 @@ export function HeroSection() {
                 <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
                 <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
-                <span className="text-xs font-mono text-gray-400 ml-2">dheeraj.workspace</span>
+                <span className="text-xs font-mono text-gray-400 ml-2">workspace.telemetry</span>
               </div>
               <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                 ACTIVE
@@ -193,7 +193,7 @@ export function HeroSection() {
 
             {/* Dynamic Console Output */}
             <div className="p-3 rounded-lg bg-black/60 border border-white/10 text-[11px] font-mono text-gray-400 space-y-1">
-              <div className="text-blue-400 font-semibold">$ dheeraj --status</div>
+              <div className="text-blue-400 font-semibold">$ dev --status</div>
               <div>&gt; "Constantly learning, building, breaking things, and building them better."</div>
             </div>
           </motion.div>
