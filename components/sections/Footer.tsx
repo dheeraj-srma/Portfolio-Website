@@ -16,12 +16,12 @@ export function Footer() {
         <div className="flex items-center gap-3">
           <span className="font-bold text-white tracking-tight">{PERSONAL_INFO.name}</span>
           <span className="text-gray-600">•</span>
-          <span className="font-mono">© {new Date().getFullYear()} All Rights Reserved.</span>
+          <span className="font-mono">Engineering student & AI builder</span>
         </div>
 
         {/* Middle Note */}
         <div className="font-mono text-gray-500 text-center">
-          Architected with Next.js, Framer Motion & Tailwind CSS
+          Built with curiosity, Next.js, TypeScript & Tailwind CSS
         </div>
 
         {/* Back to top button */}

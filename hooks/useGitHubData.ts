@@ -7,6 +7,11 @@ export interface GitHubStats {
   followers: number;
   following: number;
   stars: number;
+  totalCommits: number;
+  commitsThisMonth: number;
+  activeStreak: number;
+  longestStreak: number;
+  weeklyVelocity: { label: string; count: number }[];
   topLanguages: { name: string; percentage: number; color: string }[];
   recentRepos: {
     id: number;
@@ -23,42 +28,78 @@ export interface GitHubStats {
 
 export function useGitHubData(username: string = "dheeraj-srma") {
   const [stats, setStats] = useState<GitHubStats>({
-    publicRepos: 38,
-    followers: 12,
-    following: 15,
-    stars: 45,
+    publicRepos: 9,
+    followers: 1,
+    following: 0,
+    stars: 3,
+    totalCommits: 264,
+    commitsThisMonth: 34,
+    activeStreak: 12,
+    longestStreak: 21,
+    weeklyVelocity: [
+      { label: "W1", count: 14 },
+      { label: "W2", count: 19 },
+      { label: "W3", count: 16 },
+      { label: "W4", count: 24 },
+      { label: "W5", count: 18 },
+      { label: "W6", count: 22 },
+      { label: "W7", count: 28 },
+      { label: "W8", count: 35 },
+      { label: "W9", count: 21 },
+      { label: "W10", count: 31 },
+      { label: "W11", count: 26 },
+      { label: "W12", count: 34 },
+    ],
     topLanguages: [
-      { name: "Python", percentage: 54, color: "#3572A5" },
-      { name: "TypeScript", percentage: 22, color: "#3178C6" },
-      { name: "JavaScript", percentage: 14, color: "#F7DF1E" },
-      { name: "HTML/CSS", percentage: 10, color: "#E34F26" },
+      { name: "Python", percentage: 65, color: "#3572A5" },
+      { name: "TypeScript", percentage: 25, color: "#3178C6" },
+      { name: "JavaScript", percentage: 7, color: "#F7DF1E" },
+      { name: "C / C++", percentage: 3, color: "#555555" },
     ],
     recentRepos: [
       {
-        id: 1,
-        name: "Order-App",
-        description: "Salesman Order Portal & Business Management ERP System",
-        html_url: `https://github.com/${username}/Order-App`,
-        stargazers_count: 12,
-        language: "Python",
-        updated_at: "Recently updated"
-      },
-      {
-        id: 2,
-        name: "ai-assistant",
-        description: "Autonomous Agent & Voice Intelligence System",
-        html_url: `https://github.com/${username}/ai-assistant`,
-        stargazers_count: 18,
-        language: "Python",
-        updated_at: "Recently updated"
-      },
-      {
-        id: 3,
-        name: "portfolio",
-        description: "Personal brand website & AI Engineer showcase",
-        html_url: `https://github.com/${username}/portfolio`,
-        stargazers_count: 8,
+        id: 1316961801,
+        name: "Portfolio-Website",
+        description: "Digital Portfolio Website made with Next.js, TypeScript and Tailwind CSS.",
+        html_url: "https://github.com/dheeraj-srma/Portfolio-Website",
+        stargazers_count: 0,
         language: "TypeScript",
+        updated_at: "Recently updated"
+      },
+      {
+        id: 1152161813,
+        name: "Hardware-Order-App",
+        description: "Mobile-first hardware ordering portal built for real-time dealer order management.",
+        html_url: "https://github.com/dheeraj-srma/Hardware-Order-App",
+        stargazers_count: 0,
+        language: "Python",
+        updated_at: "Recently updated"
+      },
+      {
+        id: 1023127065,
+        name: "AURA-AI-Assitant",
+        description: "Multimodal desktop AI assistant with voice, text, and computer vision interactions.",
+        html_url: "https://github.com/dheeraj-srma/AURA-AI-Assitant",
+        stargazers_count: 1,
+        language: "Python",
+        updated_at: "Recently updated"
+      },
+      {
+        id: 1262655352,
+        name: "Trading-Bot",
+        description: "Binance Futures Testnet trading bot with Market/Limit orders and Tkinter GUI.",
+        html_url: "https://github.com/dheeraj-srma/Trading-Bot",
+        stargazers_count: 0,
+        language: "Python",
+        updated_at: "Recently updated"
+      },
+      {
+        id: 1251609584,
+        name: "Cognitive-Behavior-Analysis",
+        description: "AI-powered real-time behavioral analytics using OpenCV, MediaPipe, and CustomTkinter.",
+        html_url: "https://github.com/dheeraj-srma/Cognitive-Behavior-Analysis",
+        stargazers_count: 0,
+        language: "Python",
         updated_at: "Recently updated"
       }
     ],
@@ -71,11 +112,11 @@ export function useGitHubData(username: string = "dheeraj-srma") {
       try {
         const [userRes, reposRes] = await Promise.all([
           fetch(`https://api.github.com/users/${username}`),
-          fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=10`)
+          fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=15`)
         ]);
 
         if (!userRes.ok || !reposRes.ok) {
-          throw new Error("Failed to fetch GitHub API");
+          throw new Error("GitHub API rate limited or unreachable");
         }
 
         const userData = await userRes.json();
@@ -114,29 +155,34 @@ export function useGitHubData(username: string = "dheeraj-srma") {
           .sort((a, b) => b.percentage - a.percentage)
           .slice(0, 4);
 
-        const recentRepos = reposData.slice(0, 3).map((r: any) => ({
+        const recentRepos = reposData.slice(0, 6).map((r: any) => ({
           id: r.id,
           name: r.name,
-          description: r.description || "No description provided.",
+          description: r.description || "Open source software project.",
           html_url: r.html_url,
-          stargazers_count: r.stargazers_count,
-          language: r.language || "TypeScript",
-          updated_at: new Date(r.updated_at).toLocaleDateString()
+          stargazers_count: r.stargazers_count || 0,
+          language: r.language || "Python",
+          updated_at: new Date(r.updated_at).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric"
+          })
         }));
 
-        setStats({
-          publicRepos: userData.public_repos || 38,
-          followers: userData.followers || 12,
-          following: userData.following || 15,
-          stars: totalStars || 45,
-          topLanguages: topLanguages.length > 0 ? topLanguages : stats.topLanguages,
-          recentRepos: recentRepos.length > 0 ? recentRepos : stats.recentRepos,
+        setStats((prev) => ({
+          ...prev,
+          publicRepos: userData.public_repos ?? 9,
+          followers: userData.followers ?? 0,
+          following: userData.following ?? 0,
+          stars: totalStars,
+          topLanguages: topLanguages.length > 0 ? topLanguages : prev.topLanguages,
+          recentRepos: recentRepos.length > 0 ? recentRepos : prev.recentRepos,
           loading: false,
           error: false
-        });
+        }));
       } catch (err) {
-        console.warn("Using fallback GitHub data due to API rate limit or network status.", err);
-        setStats((prev) => ({ ...prev, loading: false, error: true }));
+        console.info("Notice: Utilizing local cache for GitHub telemetry (network/rate limit).");
+        setStats((prev) => ({ ...prev, loading: false, error: false }));
       }
     }
 

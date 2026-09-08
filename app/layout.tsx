@@ -8,22 +8,25 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Dheeraj Sharma | AI Engineer, Builder & Entrepreneur",
-  description: "Personal brand website of Dheeraj Sharma. AI Engineer, Machine Learning Developer, and Product Entrepreneur building high-impact intelligence systems.",
+  title: "Dheeraj Sharma | Engineering Student, AI Builder & Developer",
+  description:
+    "Portfolio of Dheeraj Sharma. Engineering student building working systems with AI, machine learning, software, data and curiosity.",
   keywords: [
-    "AI Engineer",
-    "Machine Learning Developer",
     "Dheeraj Sharma",
+    "Engineering Student",
+    "AI Builder",
+    "Software Developer",
+    "Machine Learning",
     "Deep Learning",
     "Computer Vision",
-    "Full Stack AI",
-    "Entrepreneur",
-    "Data Scientist"
+    "Python",
+    "TypeScript",
+    "Next.js"
   ],
   authors: [{ name: "Dheeraj Sharma", url: "https://github.com/dheeraj-srma" }],
   openGraph: {
-    title: "Dheeraj Sharma | AI Engineer & Product Builder",
-    description: "Building autonomous AI systems, scalable software, and high-performance analytics engines.",
+    title: "Dheeraj Sharma | Engineering Student & AI Builder",
+    description: "Building with AI, software, data and curiosity. Turning ideas into working systems.",
     url: "https://github.com/dheeraj-srma",
     siteName: "Dheeraj Sharma Portfolio",
     images: [
@@ -39,8 +42,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Dheeraj Sharma | AI Engineer",
-    description: "AI Architect & Software Builder solving complex challenges with machine intelligence.",
+    title: "Dheeraj Sharma | Engineering Student & AI Builder",
+    description: "Building with AI, software, data and curiosity.",
     creator: "@dheeraj_srma",
     images: ["https://github.com/dheeraj-srma.png"],
   },
@@ -54,7 +57,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Person",
   name: "Dheeraj Sharma",
-  jobTitle: "AI Engineer & Entrepreneur",
+  jobTitle: "Engineering Student & AI Builder",
   url: "https://github.com/dheeraj-srma",
   sameAs: [
     "https://github.com/dheeraj-srma",
@@ -68,7 +71,9 @@ const jsonLd = {
     "Computer Vision",
     "Python",
     "TypeScript",
-    "Next.js"
+    "Next.js",
+    "Mathematics",
+    "Physics"
   ]
 };
 

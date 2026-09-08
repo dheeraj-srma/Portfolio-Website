@@ -2,20 +2,8 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Brain, Cpu, Eye, BarChart3, Code2, Zap, Rocket, Sparkles } from "lucide-react";
-import { ABOUT_IDENTITY_CARDS } from "@/lib/data";
+import { Compass, BookOpen, Atom, Binary, Sparkles, Orbit, Telescope, ScrollText } from "lucide-react";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
-
-const ICON_MAP: Record<string, React.ElementType> = {
-  Brain,
-  Cpu,
-  Eye,
-  BarChart3,
-  Code2,
-  Zap,
-  Rocket,
-  Sparkles,
-};
 
 export function AboutSection() {
   return (
@@ -23,71 +11,126 @@ export function AboutSection() {
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.4 }}
           className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/30 bg-purple-500/10 text-xs font-mono text-purple-300 uppercase tracking-widest"
         >
-          <Brain size={14} />
-          <span>Core Competencies</span>
+          <Compass size={14} />
+          <span>Curiosity & Identity</span>
         </motion.div>
         <motion.h2
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.1 }}
           className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight"
         >
-          Engineering Identity & Mindset
+          About Dheeraj
         </motion.h2>
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-gray-400 text-base sm:text-lg font-light"
         >
-          Direct, zero-fluff capabilities focused on building high-performance intelligence systems.
+          An engineering student exploring the intersection of theory, building, and the physical cosmos.
         </motion.p>
       </div>
 
-      {/* Identity Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {ABOUT_IDENTITY_CARDS.map((card, index) => {
-          const Icon = ICON_MAP[card.icon] || Sparkles;
-          return (
-            <motion.div
-              key={card.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.08 }}
-            >
-              <SpotlightCard className="h-full flex flex-col justify-between group">
-                <div className="space-y-4">
-                  {/* Icon Container */}
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-tr from-white/10 to-white/5 border border-white/10 flex items-center justify-center text-blue-400 group-hover:text-white group-hover:scale-110 group-hover:border-blue-500/40 transition-all duration-300">
-                    <Icon size={24} />
-                  </div>
+      {/* Main Narrative & Philosophical Breadth */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: The Genuine Story */}
+        <div className="lg:col-span-7 space-y-6 text-gray-300 font-light leading-relaxed text-base sm:text-lg">
+          <SpotlightCard className="p-8 space-y-6">
+            <h3 className="text-2xl font-bold text-white tracking-tight">
+              Going deeper than the surface.
+            </h3>
+            <p>
+              I am an engineering student studying technology while exploring artificial intelligence,
+              machine learning, software engineering, and data systems. But I don't just want to call
+              functions or read summaries.
+            </p>
+            <p>
+              If I encounter a machine learning concept, I want to understand the linear algebra,
+              loss geometry, and optimization mechanics behind it. If I build software, I care about
+              how the backend, relational database schema, APIs, network requests, and concurrency models
+              actually behave under real constraints.
+            </p>
+            <p className="text-white font-medium">
+              Mathematics matters to me. Physics matters to me. Artificial intelligence, space, and astronomy
+              fascinate me. But I never want to remain purely theoretical.
+            </p>
+            <p>
+              I like taking what I learn and turning it into something tangible. That is why my projects
+              span very different domains: some are algorithmic experiments, some are medical deep-learning
+              investigations, some are voice assistants, and some are serious business systems running in
+              production.
+            </p>
+            <div className="pt-2">
+              <span className="inline-block px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300 font-mono text-xs">
+                That variety is intentional.
+              </span>
+            </div>
+          </SpotlightCard>
+        </div>
 
-                  {/* Title */}
-                  <h3 className="text-xl font-bold text-white tracking-tight group-hover:text-blue-300 transition-colors">
-                    {card.title}
-                  </h3>
+        {/* Right Column: Intellectual Curiosity & Cross-Disciplinary Pillars */}
+        <div className="lg:col-span-5 space-y-4">
+          <div className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-3 px-1">
+            Curiosity Across Disciplines
+          </div>
 
-                  {/* One sentence description */}
-                  <p className="text-sm text-gray-400 leading-relaxed font-light">
-                    {card.description}
-                  </p>
-                </div>
+          <SpotlightCard className="p-5 flex items-start gap-4">
+            <div className="h-10 w-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+              <Binary size={20} />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-base font-bold text-white">Mathematics & Geometry</h4>
+              <p className="text-xs text-gray-400 leading-relaxed font-light">
+                Matrix transformations, vector spaces, eigenvalues, and multivariate calculus—the foundational bedrock of modern machine learning.
+              </p>
+            </div>
+          </SpotlightCard>
 
-                {/* Subtle Bottom Accent Indicator */}
-                <div className="mt-6 h-0.5 w-full bg-gradient-to-r from-blue-500/0 via-purple-500/40 to-blue-500/0 group-hover:via-blue-400 transition-all" />
-              </SpotlightCard>
-            </motion.div>
-          );
-        })}
+          <SpotlightCard className="p-5 flex items-start gap-4">
+            <div className="h-10 w-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0">
+              <Orbit size={20} />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-base font-bold text-white">Physics & Cosmos</h4>
+              <p className="text-xs text-gray-400 leading-relaxed font-light">
+                Astrophysics, orbital mechanics, thermodynamics, and the structure of the universe that shapes how physical systems evolve over time.
+              </p>
+            </div>
+          </SpotlightCard>
+
+          <SpotlightCard className="p-5 flex items-start gap-4">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+              <Atom size={20} />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-base font-bold text-white">Engineering & Systems</h4>
+              <p className="text-xs text-gray-400 leading-relaxed font-light">
+                Taking concepts into the physical world through working software: schemas, caching, IPC loops, and real-time reliability.
+              </p>
+            </div>
+          </SpotlightCard>
+
+          <SpotlightCard className="p-5 flex items-start gap-4">
+            <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+              <ScrollText size={20} />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-base font-bold text-white">History & Literature</h4>
+              <p className="text-xs text-gray-400 leading-relaxed font-light">
+                Exploring European history, classical literature, poetry, and philosophy to appreciate how human ideas and civilizations compound.
+              </p>
+            </div>
+          </SpotlightCard>
+        </div>
       </div>
     </section>
   );

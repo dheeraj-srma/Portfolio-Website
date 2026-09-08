@@ -22,27 +22,39 @@ export function BackgroundCanvas() {
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    // Particle setup
-    const particleCount = Math.min(Math.floor(window.innerWidth / 15), 90);
+    // Cosmic starfield particles
+    const particleCount = Math.min(Math.floor(window.innerWidth / 14), 110);
     const particles: {
       x: number;
       y: number;
       radius: number;
+      baseAlpha: number;
+      alpha: number;
+      pulseSpeed: number;
       vx: number;
       vy: number;
-      alpha: number;
-      targetAlpha: number;
+      color: string;
     }[] = [];
 
+    const starColors = [
+      "rgba(255, 255, 255,",
+      "rgba(191, 219, 254,", // soft blue
+      "rgba(233, 213, 255,", // soft purple
+      "rgba(254, 215, 170,"  // warm celestial
+    ];
+
     for (let i = 0; i < particleCount; i++) {
+      const baseAlpha = Math.random() * 0.6 + 0.15;
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        radius: Math.random() * 1.5 + 0.5,
-        vx: (Math.random() - 0.5) * 0.2,
-        vy: (Math.random() - 0.5) * 0.2,
-        alpha: Math.random() * 0.5 + 0.1,
-        targetAlpha: Math.random() * 0.6 + 0.2,
+        radius: Math.random() * 1.4 + 0.4,
+        baseAlpha,
+        alpha: baseAlpha,
+        pulseSpeed: (Math.random() * 0.02 + 0.005) * (Math.random() > 0.5 ? 1 : -1),
+        vx: (Math.random() - 0.5) * 0.15,
+        vy: (Math.random() - 0.5) * 0.15,
+        color: starColors[Math.floor(Math.random() * starColors.length)]
       });
     }
 
@@ -56,50 +68,87 @@ export function BackgroundCanvas() {
 
     window.addEventListener("mousemove", handleMouseMove);
 
+    let tick = 0;
+
     const render = () => {
+      tick += 0.005;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw faint connections between close particles
+      // Subtle celestial orbit rings in background
+      const cx = canvas.width * 0.85;
+      const cy = canvas.height * 0.2;
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(168, 85, 247, 0.035)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 12]);
+
+      // Orbital ellipse 1
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 340, 180, Math.PI / 6, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Orbital ellipse 2
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 520, 280, Math.PI / 6, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Lower left coordinate circle
+      ctx.strokeStyle = "rgba(59, 130, 246, 0.025)";
+      ctx.beginPath();
+      ctx.ellipse(canvas.width * 0.1, canvas.height * 0.85, 400, 220, -Math.PI / 8, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.restore();
+
+      // Render stars & subtle dynamic constellation lines
       for (let i = 0; i < particles.length; i++) {
-        const p1 = particles[i];
+        const p = particles[i];
 
-        // Move particle
-        p1.x += p1.vx;
-        p1.y += p1.vy;
+        // Move
+        p.x += p.vx;
+        p.y += p.vy;
 
-        // Wrap edges
-        if (p1.x < 0) p1.x = canvas.width;
-        if (p1.x > canvas.width) p1.x = 0;
-        if (p1.y < 0) p1.y = canvas.height;
-        if (p1.y > canvas.height) p1.y = 0;
-
-        // Subtle mouse push
-        const dx = mouseX - p1.x;
-        const dy = mouseY - p1.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 120) {
-          p1.x -= (dx / dist) * 0.3;
-          p1.y -= (dy / dist) * 0.3;
+        // Twinkle
+        p.alpha += p.pulseSpeed;
+        if (p.alpha > 0.85 || p.alpha < 0.1) {
+          p.pulseSpeed = -p.pulseSpeed;
         }
 
-        // Draw particle
+        // Screen wrap
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+
+        // Subtle reaction to mouse
+        const dx = mouseX - p.x;
+        const dy = mouseY - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 130) {
+          p.x -= (dx / dist) * 0.25;
+          p.y -= (dy / dist) * 0.25;
+        }
+
+        // Draw star
         ctx.beginPath();
-        ctx.arc(p1.x, p1.y, p1.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${p1.alpha})`;
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `${p.color} ${p.alpha})`;
         ctx.fill();
 
+        // Connect nearby stars with faint cosmic filaments
         for (let j = i + 1; j < particles.length; j++) {
           const p2 = particles[j];
-          const pdx = p1.x - p2.x;
-          const pdy = p1.y - p2.y;
-          const pDist = Math.sqrt(pdx * pdx + pdy * pdy);
+          const cdx = p.x - p2.x;
+          const cdy = p.y - p2.y;
+          const cdist = Math.sqrt(cdx * cdx + cdy * cdy);
 
-          if (pDist < 100) {
+          if (cdist < 95) {
             ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
+            ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
-            const lineAlpha = (1 - pDist / 100) * 0.08;
-            ctx.strokeStyle = `rgba(168, 85, 247, ${lineAlpha})`;
+            const lineAlpha = (1 - cdist / 95) * 0.05;
+            ctx.strokeStyle = `rgba(147, 197, 253, ${lineAlpha})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }
@@ -120,19 +169,23 @@ export function BackgroundCanvas() {
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {/* Base Layer dark background */}
+      {/* Base deep black */}
       <div className="absolute inset-0 bg-[#050505]" />
 
-      {/* Layer 2: Blurred Gradient Blobs */}
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/20 rounded-full blur-[140px] animate-blob-pulse" />
-      <div className="absolute top-1/3 -right-40 w-[30rem] h-[30rem] bg-purple-600/15 rounded-full blur-[160px] animate-blob-pulse-delayed" />
-      <div className="absolute -bottom-40 left-1/3 w-[32rem] h-[32rem] bg-pink-600/10 rounded-full blur-[180px] animate-blob-pulse" />
+      {/* Atmospheric Cosmic Gradients */}
+      <div className="absolute -top-32 -left-32 w-[34rem] h-[34rem] bg-blue-600/15 rounded-full blur-[150px] animate-blob-pulse" />
+      <div className="absolute top-1/4 -right-36 w-[36rem] h-[36rem] bg-purple-600/12 rounded-full blur-[170px] animate-blob-pulse-delayed" />
+      <div className="absolute -bottom-36 left-1/4 w-[38rem] h-[38rem] bg-indigo-600/10 rounded-full blur-[190px] animate-blob-pulse" />
+      <div className="absolute top-2/3 right-1/4 w-[28rem] h-[28rem] bg-pink-600/08 rounded-full blur-[160px] animate-blob-pulse-delayed" />
 
-      {/* Layer 3: Noise Texture */}
-      <div className="absolute inset-0 noise-overlay pointer-events-none opacity-40" />
+      {/* Scientific Engineering Coordinate Grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:64px_64px] opacity-70" />
 
-      {/* Layer 4: Moving Stars/Particles Canvas */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-60" />
+      {/* Subtle Noise Texture */}
+      <div className="absolute inset-0 noise-overlay pointer-events-none opacity-30" />
+
+      {/* Canvas Layer: Starfield & Orbital Paths */}
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-80" />
     </div>
   );
 }

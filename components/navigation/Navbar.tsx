@@ -2,14 +2,15 @@
 
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Terminal, User, Code2, Sparkles, FolderGit2, Mail, Menu, X } from "lucide-react";
+import { Terminal, User, Code2, Sparkles, FolderGit2, Mail, Menu, X, Compass, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { name: "About", href: "#about", icon: User },
-  { name: "Skills", href: "#skills", icon: Code2 },
+  { name: "Philosophy", href: "#philosophy", icon: Compass },
+  { name: "What I Build", href: "#what-i-build", icon: Layers },
   { name: "Projects", href: "#projects", icon: Sparkles },
-  { name: "Journey", href: "#journey", icon: Terminal },
+  { name: "Building Now", href: "#currently-building", icon: Terminal },
   { name: "GitHub", href: "#github", icon: FolderGit2 },
   { name: "Contact", href: "#contact", icon: Mail },
 ];
@@ -65,15 +66,15 @@ export function Navbar() {
           className={cn(
             "flex items-center justify-between gap-6 rounded-full px-6 transition-all duration-300 border border-white/10 shadow-2xl backdrop-blur-xl",
             scrolled
-              ? "py-2.5 bg-[#050505]/80 w-full max-w-4xl border-white/15"
-              : "py-4 bg-white/[0.03] w-full max-w-5xl border-white/10"
+              ? "py-2.5 bg-[#050505]/80 w-full max-w-5xl border-white/15"
+              : "py-4 bg-white/[0.03] w-full max-w-6xl border-white/10"
           )}
         >
           {/* Logo / Initials */}
           <a
             href="#hero"
             onClick={(e) => scrollToSection(e, "#hero")}
-            className="flex items-center gap-2 group cursor-pointer"
+            className="flex items-center gap-2 group cursor-pointer shrink-0"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 via-purple-600 to-pink-500 p-[1px] transition-transform duration-300 group-hover:scale-105">
               <div className="flex h-full w-full items-center justify-center rounded-full bg-[#050505]">
@@ -84,14 +85,14 @@ export function Navbar() {
               <span className="text-sm font-semibold text-white tracking-tight group-hover:text-blue-400 transition-colors">
                 Dheeraj Sharma
               </span>
-              <span className="text-[10px] text-gray-400 font-mono tracking-wider uppercase">
-                AI Architect
+              <span className="text-[10px] text-gray-400 font-mono tracking-wider">
+                AI Builder · Engineer
               </span>
             </div>
           </a>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center gap-1 bg-white/[0.03] p-1.5 rounded-full border border-white/5">
+          <div className="hidden lg:flex items-center gap-1 bg-white/[0.03] p-1.5 rounded-full border border-white/5">
             {NAV_ITEMS.map((item) => {
               const isActive = activeSection === item.href.substring(1);
               return (
@@ -100,7 +101,7 @@ export function Navbar() {
                   href={item.href}
                   onClick={(e) => scrollToSection(e, item.href)}
                   className={cn(
-                    "relative px-4 py-1.5 text-xs font-medium transition-all duration-300 rounded-full cursor-pointer",
+                    "relative px-3.5 py-1.5 text-xs font-medium transition-all duration-300 rounded-full cursor-pointer",
                     isActive
                       ? "text-white"
                       : "text-gray-400 hover:text-gray-200"
@@ -120,14 +121,14 @@ export function Navbar() {
           </div>
 
           {/* CTA Right Action */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-3 shrink-0">
             <a
               href="#contact"
               onClick={(e) => scrollToSection(e, "#contact")}
               className="relative inline-flex items-center justify-center p-0.5 overflow-hidden text-xs font-semibold rounded-full group bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105 active:scale-95"
             >
               <span className="px-4 py-1.5 transition-all ease-in duration-75 bg-[#0A0A0C] rounded-full group-hover:bg-transparent">
-                Let's Connect
+                Connect
               </span>
             </a>
           </div>
@@ -135,7 +136,7 @@ export function Navbar() {
           {/* Mobile Hamburger Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden flex h-9 w-9 items-center justify-center rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white"
+            className="lg:hidden flex h-9 w-9 items-center justify-center rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white"
             aria-label="Toggle Navigation"
           >
             {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
@@ -143,7 +144,7 @@ export function Navbar() {
         </motion.nav>
       </header>
 
-      {/* Mobile Floating Dock / Menu Overlay */}
+      {/* Mobile Floating Menu Overlay */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
@@ -151,7 +152,7 @@ export function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-x-4 top-20 z-40 md:hidden rounded-2xl glass-panel p-4 border border-white/15 bg-[#0A0A0D]/95 shadow-2xl backdrop-blur-2xl"
+            className="fixed inset-x-4 top-20 z-40 lg:hidden rounded-2xl glass-panel p-4 border border-white/15 bg-[#0A0A0D]/95 shadow-2xl backdrop-blur-2xl"
           >
             <div className="grid grid-cols-2 gap-2">
               {NAV_ITEMS.map((item) => {
