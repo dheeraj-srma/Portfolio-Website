@@ -1,68 +1,23 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import {
   Star,
-  GitFork,
   BookOpen,
   Activity,
   ArrowUpRight,
   Code,
-  Terminal,
   GitBranch,
-  GitCommit,
-  TrendingUp,
-  Flame
+  Flame,
+  TrendingUp
 } from "lucide-react";
 import { GithubIcon } from "@/components/common/Icons";
 import { useGitHubData } from "@/hooks/useGitHubData";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
 
-// 20 weeks x 7 days heatmap matrix representing continuous development sprints
-const HEATMAP_PATTERNS = [
-  [0, 1, 0, 2, 1, 0, 0], // W1 - May
-  [1, 0, 2, 1, 0, 1, 0], // W2
-  [0, 2, 1, 0, 3, 2, 0], // W3
-  [1, 2, 0, 2, 1, 0, 1], // W4
-  [2, 3, 1, 4, 2, 1, 0], // W5 - Jun (AURA & Trading-Bot)
-  [1, 2, 3, 2, 4, 0, 1], // W6
-  [2, 4, 3, 1, 2, 3, 1], // W7
-  [3, 4, 4, 2, 3, 2, 0], // W8
-  [1, 2, 3, 1, 2, 0, 1], // W9 - Jul (Hardware Order App)
-  [2, 3, 4, 3, 4, 2, 1], // W10
-  [3, 2, 4, 4, 3, 1, 2], // W11
-  [1, 3, 2, 3, 2, 4, 1], // W12
-  [4, 3, 2, 4, 3, 1, 0], // W13 - Late Jul (Portfolio Website)
-  [2, 1, 3, 2, 4, 2, 1], // W14 - Aug (TB_3D_AI)
-  [1, 3, 2, 1, 3, 0, 2], // W15
-  [3, 4, 2, 3, 4, 1, 0], // W16
-  [2, 2, 4, 3, 2, 3, 1], // W17 - Late Aug
-  [3, 4, 3, 4, 4, 2, 1], // W18 - Sep (Stock Management App)
-  [2, 3, 4, 3, 3, 4, 2], // W19
-  [3, 4, 4, 3, 4, 2, 3], // W20 - Present sprint
-];
-
 export function GitHubSection() {
   const stats = useGitHubData("dheeraj-srma");
-
-  const heatmapDays = useMemo(() => {
-    const days: { week: number; day: number; level: 0 | 1 | 2 | 3 | 4; count: number; date: string }[] = [];
-    for (let w = 0; w < HEATMAP_PATTERNS.length; w++) {
-      for (let d = 0; d < 7; d++) {
-        const level = HEATMAP_PATTERNS[w][d] as 0 | 1 | 2 | 3 | 4;
-        const count = level === 0 ? 0 : level === 1 ? 2 : level === 2 ? 4 : level === 3 ? 7 : 11;
-        days.push({
-          week: w + 1,
-          day: d,
-          level,
-          count,
-          date: `Week ${w + 1}, Day ${d + 1}`
-        });
-      }
-    }
-    return days;
-  }, []);
 
   return (
     <section id="github" className="py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10">
@@ -94,7 +49,7 @@ export function GitHubSection() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-gray-400 text-base sm:text-lg font-light"
         >
-          A transparent window into my actual code repositories at @dheeraj-srma.
+          Live synchronization with my real-world GitHub activity and code repositories at @dheeraj-srma.
         </motion.p>
       </div>
 
@@ -108,7 +63,10 @@ export function GitHubSection() {
               <Activity size={14} />
               Activity & Code Metrics
             </span>
-            <span className="text-[11px] font-mono text-gray-500">Live Git Data</span>
+            <span className="text-[11px] font-mono text-emerald-400/90 flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Live Feed
+            </span>
           </div>
 
           {/* Quick Counter Stat Cards */}
@@ -140,43 +98,43 @@ export function GitHubSection() {
               <span className="text-[10px] font-mono text-gray-400">Across Repos</span>
             </div>
 
-            {/* Multi-color Bar */}
-            <div className="h-2.5 w-full rounded-full bg-white/5 overflow-hidden flex">
+            {/* Segmented bar */}
+            <div className="h-2.5 w-full rounded-full overflow-hidden flex bg-white/5 p-0.5 gap-0.5">
               {stats.topLanguages.map((lang) => (
                 <div
                   key={lang.name}
                   style={{
                     width: `${lang.percentage}%`,
-                    backgroundColor: lang.color,
+                    backgroundColor: lang.color
                   }}
+                  className="h-full rounded-full transition-all duration-500"
                   title={`${lang.name}: ${lang.percentage}%`}
                 />
               ))}
             </div>
 
             {/* Language Legend */}
-            <div className="grid grid-cols-2 gap-2.5 pt-0.5">
+            <div className="grid grid-cols-2 gap-2 pt-1 font-mono text-xs">
               {stats.topLanguages.map((lang) => (
-                <div key={lang.name} className="flex items-center justify-between text-xs font-mono">
-                  <div className="flex items-center gap-2 truncate mr-2">
+                <div key={lang.name} className="flex items-center justify-between p-1.5 rounded-lg bg-white/[0.02]">
+                  <div className="flex items-center gap-2">
                     <span
                       className="h-2.5 w-2.5 rounded-full shrink-0"
                       style={{ backgroundColor: lang.color }}
                     />
-                    <span className="text-gray-300 truncate">{lang.name}</span>
+                    <span className="text-gray-300 text-[11px] truncate">{lang.name}</span>
                   </div>
-                  <span className="text-gray-500 shrink-0">{lang.percentage}%</span>
+                  <span className="text-gray-400 text-[11px] font-semibold">{lang.percentage}%</span>
                 </div>
               ))}
             </div>
           </SpotlightCard>
 
-          {/* Commit Activity & Velocity Telemetry Card */}
-          <SpotlightCard className="p-4 sm:p-5 space-y-4 border border-white/10 hover:border-emerald-500/30 transition-all">
-            {/* Header */}
+          {/* Activity & Velocity Matrix */}
+          <SpotlightCard className="p-4 sm:p-5 space-y-4 border border-white/10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <GitCommit size={16} className="text-emerald-400" />
+                <Flame size={16} className="text-amber-400" />
                 <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
                   Commit Activity & Velocity
                 </h3>
@@ -189,7 +147,7 @@ export function GitHubSection() {
             {/* Numerical Metrics Row */}
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-2 rounded-lg bg-white/[0.03] border border-white/5 space-y-0.5">
-                <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block truncate">Total</span>
+                <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block truncate">Yearly Total</span>
                 <span className="text-sm sm:text-base font-bold font-mono text-white">{stats.totalCommits}+</span>
               </div>
               <div className="p-2 rounded-lg bg-white/[0.03] border border-white/5 space-y-0.5">
@@ -197,12 +155,12 @@ export function GitHubSection() {
                 <span className="text-sm sm:text-base font-bold font-mono text-emerald-400">+{stats.commitsThisMonth}</span>
               </div>
               <div className="p-2 rounded-lg bg-white/[0.03] border border-white/5 space-y-0.5">
-                <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block truncate">Streak</span>
+                <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block truncate">Active Streak</span>
                 <span className="text-sm sm:text-base font-bold font-mono text-purple-400">{stats.activeStreak}d</span>
               </div>
             </div>
 
-            {/* Graphical 1: Contribution Heatmap Grid */}
+            {/* Graphical 1: Contribution Heatmap Grid (Real Data) */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-[11px] font-mono text-gray-400">
                 <span>Contribution Heatmap (20 Weeks)</span>
@@ -214,32 +172,42 @@ export function GitHubSection() {
                 <div className="inline-block min-w-full">
                   {/* Month headers */}
                   <div className="flex justify-between text-[9px] font-mono text-gray-500 mb-1 px-0.5">
-                    <span>May</span>
-                    <span>Jun</span>
-                    <span>Jul</span>
-                    <span>Aug</span>
-                    <span>Sep</span>
+                    {stats.heatmapMonths.map((m, idx) => (
+                      <span key={`${m}-${idx}`}>{m}</span>
+                    ))}
                   </div>
 
                   {/* 7 rows (days) x 20 columns (weeks) */}
                   <div className="grid grid-rows-7 grid-flow-col gap-1 w-max">
-                    {heatmapDays.map((d, idx) => (
-                      <div
-                        key={idx}
-                        title={`${d.date}: ${d.count} commits`}
-                        className={`h-2.5 w-2.5 rounded-[2px] transition-transform hover:scale-125 cursor-pointer ${
-                          d.level === 0
-                            ? "bg-white/[0.04]"
-                            : d.level === 1
-                            ? "bg-emerald-950/70 border border-emerald-800/40"
-                            : d.level === 2
-                            ? "bg-emerald-700/70 border border-emerald-600/40"
-                            : d.level === 3
-                            ? "bg-emerald-500/80 border border-emerald-400/50"
-                            : "bg-emerald-400 border border-emerald-300 shadow-[0_0_6px_rgba(52,211,153,0.5)]"
-                        }`}
-                      />
-                    ))}
+                    {stats.heatmapDays.map((d, idx) => {
+                      let formattedDate = d.date;
+                      try {
+                        formattedDate = new Date(d.date + "T00:00:00").toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric"
+                        });
+                      } catch {
+                        // fallback
+                      }
+                      return (
+                        <div
+                          key={`${d.date}-${idx}`}
+                          title={`${formattedDate}: ${d.count} commit${d.count === 1 ? "" : "s"}`}
+                          className={`h-2.5 w-2.5 rounded-[2px] transition-transform hover:scale-125 cursor-pointer ${
+                            d.level === 0
+                              ? "bg-white/[0.04]"
+                              : d.level === 1
+                              ? "bg-emerald-950/70 border border-emerald-800/40"
+                              : d.level === 2
+                              ? "bg-emerald-700/70 border border-emerald-600/40"
+                              : d.level === 3
+                              ? "bg-emerald-500/80 border border-emerald-400/50"
+                              : "bg-emerald-400 border border-emerald-300 shadow-[0_0_6px_rgba(52,211,153,0.5)]"
+                          }`}
+                        />
+                      );
+                    })}
                   </div>
 
                   {/* Legend */}
@@ -259,30 +227,36 @@ export function GitHubSection() {
               </div>
             </div>
 
-            {/* Graphical 2: Weekly Commit Velocity Bar Chart */}
+            {/* Graphical 2: Real Weekly Commit Velocity Bar Chart */}
             <div className="space-y-2 pt-2 border-t border-white/5">
               <div className="flex items-center justify-between text-[11px] font-mono text-gray-400">
-                <span>Weekly Velocity (Last 12 Weeks)</span>
-                <span className="text-gray-500 text-[10px]">Peak: 35/wk</span>
+                <span className="flex items-center gap-1">
+                  <TrendingUp size={12} className="text-emerald-400" />
+                  Weekly Velocity (Last 12 Weeks)
+                </span>
+                <span className="text-gray-400 font-mono text-[10px]">Peak: {stats.peakWeeklyVelocity}/wk</span>
               </div>
 
               <div className="h-12 flex items-end gap-1.5 pt-1 px-1">
                 {stats.weeklyVelocity.map((w, idx) => {
-                  const heightPercent = Math.max(16, Math.round((w.count / 35) * 100));
+                  const maxPeak = Math.max(stats.peakWeeklyVelocity, 10);
+                  const heightPercent = Math.max(14, Math.round((w.count / maxPeak) * 100));
                   return (
                     <div key={idx} className="flex-1 flex flex-col items-center gap-1 group relative">
                       {/* Hover Tooltip */}
                       <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-black/95 border border-white/20 text-[9px] font-mono text-emerald-300 px-1.5 py-0.5 rounded shadow whitespace-nowrap z-20">
-                        {w.count} commits
+                        {w.count} commit{w.count === 1 ? "" : "s"}
                       </div>
                       {/* Velocity Bar */}
                       <div
                         style={{ height: `${heightPercent}%` }}
                         className={`w-full rounded-t transition-all duration-300 group-hover:bg-emerald-400 ${
-                          w.count > 25
+                          w.count >= 25
                             ? "bg-gradient-to-t from-emerald-600 to-cyan-400"
-                            : w.count > 18
-                            ? "bg-emerald-500/60"
+                            : w.count >= 10
+                            ? "bg-emerald-500/70"
+                            : w.count > 0
+                            ? "bg-emerald-600/40"
                             : "bg-white/10"
                         }`}
                       />
@@ -376,7 +350,7 @@ export function GitHubSection() {
 
           {/* Bottom helper info */}
           <div className="pt-1 px-1 flex items-center justify-between text-[11px] font-mono text-gray-500">
-            <span>Synchronized with GitHub REST API</span>
+            <span>Synchronized with GitHub REST & Contribution API</span>
             <span className="text-emerald-400/80">● Auto-updating</span>
           </div>
         </div>

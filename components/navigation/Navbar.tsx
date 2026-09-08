@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Terminal, User, Code2, Sparkles, FolderGit2, Mail, Menu, X, Compass, Layers } from "lucide-react";
+import { Terminal, User, Sparkles, FolderGit2, Mail, Menu, X, Compass, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PERSONAL_INFO } from "@/lib/data";
 
@@ -18,31 +18,35 @@ const NAV_ITEMS = [
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [activeSection, setActiveSection] = useState("");
+  const [activeSection, setActiveSection] = useState("about");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 80) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
+      const scrollY = window.scrollY;
+      setScrolled(scrollY > 40);
 
       // Active section detection
       const sections = NAV_ITEMS.map((item) => item.href.substring(1));
-      const scrollPosition = window.scrollY + 200;
+      const scrollPosition = scrollY + 220;
+
+      if (scrollY < 120) {
+        setActiveSection("about");
+        return;
+      }
 
       for (let i = sections.length - 1; i >= 0; i--) {
         const el = document.getElementById(sections[i]);
         if (el && el.offsetTop <= scrollPosition) {
           setActiveSection(sections[i]);
-          break;
+          return;
         }
       }
+      setActiveSection("about");
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -50,25 +54,31 @@ export function Navbar() {
     e.preventDefault();
     setMobileMenuOpen(false);
     const targetId = href.replace("#", "");
+    setActiveSection(targetId);
     const element = document.getElementById(targetId);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+      const navOffset = 85;
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      window.scrollTo({
+        top: Math.max(0, elementPosition - navOffset),
+        behavior: "smooth"
+      });
     }
   };
 
   return (
     <>
       {/* Desktop & Main Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-4 transition-all duration-300">
+      <header className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-3 sm:pt-4 transition-all duration-500 ease-out">
         <motion.nav
-          initial={{ y: -50, opacity: 0 }}
+          initial={{ y: -40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className={cn(
-            "flex items-center justify-between gap-6 rounded-full px-6 transition-all duration-300 border border-white/10 shadow-2xl backdrop-blur-xl",
+            "flex items-center justify-between gap-4 md:gap-6 rounded-full px-5 md:px-6 transition-all duration-500 ease-out border shadow-2xl backdrop-blur-xl w-full max-w-5xl",
             scrolled
-              ? "py-2.5 bg-[#050505]/80 w-full max-w-5xl border-white/15"
-              : "py-4 bg-white/[0.03] w-full max-w-6xl border-white/10"
+              ? "py-2.5 bg-[#050505]/90 border-white/15 shadow-black/40"
+              : "py-3.5 bg-[#08080c]/60 border-white/10 shadow-black/20"
           )}
         >
           {/* Logo / Initials or Scrolled Avatar */}
@@ -84,8 +94,8 @@ export function Navbar() {
                     key="ds-monogram"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.6, y: -10 }}
-                    transition={{ duration: 0.25 }}
+                    exit={{ opacity: 0, scale: 0.6, y: -8 }}
+                    transition={{ duration: 0.2 }}
                     className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 via-purple-600 to-pink-500 p-[1px] transition-transform duration-300 group-hover:scale-105"
                   >
                     <div className="flex h-full w-full items-center justify-center rounded-full bg-[#050505]">
@@ -95,10 +105,10 @@ export function Navbar() {
                 ) : (
                   <motion.div
                     key="pfp-avatar"
-                    initial={{ opacity: 0, scale: 0.5, y: 15 }}
+                    initial={{ opacity: 0, scale: 0.6, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.5, y: 15 }}
-                    transition={{ type: "spring", stiffness: 380, damping: 24 }}
+                    exit={{ opacity: 0, scale: 0.6, y: 10 }}
+                    transition={{ type: "spring", stiffness: 380, damping: 26 }}
                     className="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 via-purple-600 to-emerald-400 p-[1.5px] shadow-lg group-hover:scale-105"
                   >
                     <img
@@ -131,17 +141,22 @@ export function Navbar() {
                   href={item.href}
                   onClick={(e) => scrollToSection(e, item.href)}
                   className={cn(
-                    "relative px-3.5 py-1.5 text-xs font-medium transition-all duration-300 rounded-full cursor-pointer",
+                    "relative px-3.5 py-1.5 text-xs font-medium rounded-full cursor-pointer select-none transition-colors duration-200",
                     isActive
-                      ? "text-white"
+                      ? "text-white font-semibold"
                       : "text-gray-400 hover:text-gray-200"
                   )}
                 >
                   {isActive && (
                     <motion.div
-                      layoutId="activeTab"
-                      className="absolute inset-0 bg-gradient-to-r from-blue-600/60 to-purple-600/60 rounded-full border border-white/20"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      layoutId="activeNavbarTab"
+                      className="absolute inset-0 bg-gradient-to-r from-blue-600/80 via-indigo-600/80 to-purple-600/80 rounded-full border border-white/25 shadow-[0_0_15px_rgba(99,102,241,0.35)]"
+                      transition={{
+                        type: "spring",
+                        stiffness: 380,
+                        damping: 32,
+                        mass: 0.8
+                      }}
                     />
                   )}
                   <span className="relative z-10">{item.name}</span>
@@ -196,7 +211,7 @@ export function Navbar() {
                     className={cn(
                       "flex items-center gap-3 p-3 rounded-xl border text-sm font-medium transition-all",
                       isActive
-                        ? "bg-gradient-to-r from-blue-600/30 to-purple-600/30 border-blue-500/50 text-white"
+                        ? "bg-gradient-to-r from-blue-600/30 to-purple-600/30 border-blue-500/50 text-white font-semibold"
                         : "bg-white/[0.02] border-white/5 text-gray-400 hover:text-white hover:bg-white/[0.05]"
                     )}
                   >
