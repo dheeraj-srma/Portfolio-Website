@@ -120,6 +120,15 @@ export function useGitHubData(username: string = "dheeraj-srma") {
         updated_at: "Recently updated"
       },
       {
+        id: 881436517,
+        name: "Billing-software",
+        description: "Desktop billing and invoice management software for transactions, records, and inventory.",
+        html_url: "https://github.com/dheeraj-srma/Billing-software",
+        stargazers_count: 1,
+        language: "Python",
+        updated_at: "Recently updated"
+      },
+      {
         id: 1023127065,
         name: "AURA-AI-Assitant",
         description: "Multimodal desktop AI assistant with voice, text, and computer vision interactions.",
@@ -143,6 +152,24 @@ export function useGitHubData(username: string = "dheeraj-srma") {
         description: "AI-powered real-time behavioral analytics using OpenCV, MediaPipe, and CustomTkinter.",
         html_url: "https://github.com/dheeraj-srma/Cognitive-Behavior-Analysis",
         stargazers_count: 0,
+        language: "Python",
+        updated_at: "Recently updated"
+      },
+      {
+        id: 989425398,
+        name: "Face-Analyzer",
+        description: "Real-time facial detection and analytics using OpenCV and DeepFace for age, gender, and emotion.",
+        html_url: "https://github.com/dheeraj-srma/Face-Analyzer",
+        stargazers_count: 0,
+        language: "Python",
+        updated_at: "Recently updated"
+      },
+      {
+        id: 895553654,
+        name: "AI-PYTHON-MODEL",
+        description: "Machine learning neural model repository experimenting with custom training architectures.",
+        html_url: "https://github.com/dheeraj-srma/AI-PYTHON-MODEL",
+        stargazers_count: 1,
         language: "Python",
         updated_at: "Recently updated"
       }
@@ -225,7 +252,8 @@ export function useGitHubData(username: string = "dheeraj-srma") {
             topLanguages = calculatedLanguages;
           }
 
-          const calculatedRepos = repos.slice(0, 6).map((r: any) => ({
+          const filteredRepos = repos.filter((r: any) => r.name !== username);
+          const calculatedRepos = filteredRepos.slice(0, 8).map((r: any) => ({
             id: r.id,
             name: r.name,
             description: r.description || "Open source software project.",

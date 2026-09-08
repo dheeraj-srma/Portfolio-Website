@@ -54,14 +54,86 @@ export function GitHubSection() {
       </div>
 
       {/* Main GitHub Showcase Grid - Balanced & Responsive */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Side (5 cols): Metrics, Languages, Activity & Velocity */}
-        <div className="lg:col-span-5 space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-stretch">
+        {/* Left Side (7 cols): Repositories Showcase in 2-Column Grid (4 rows x 2 = 8 repos) */}
+        <div className="lg:col-span-7 flex flex-col justify-between space-y-3.5">
+          {/* Top Header */}
+          <div className="h-7 flex items-center justify-between px-1">
+            <span className="text-xs font-mono uppercase tracking-widest text-blue-400 font-semibold flex items-center gap-2">
+              <GitBranch size={14} />
+              Featured Public Repositories ({stats.recentRepos.length})
+            </span>
+            <a
+              href="https://github.com/dheeraj-srma?tab=repositories"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] font-mono text-gray-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+            >
+              <span>View all on GitHub</span>
+              <ArrowUpRight size={12} />
+            </a>
+          </div>
+
+          {/* 4 rows x 2 columns = 8 repos grid, styled to fit perfectly alongside telemetry panel */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+            {stats.recentRepos.slice(0, 8).map((repo) => (
+              <a
+                key={repo.name}
+                href={repo.html_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block group h-full"
+              >
+                <SpotlightCard className="h-full p-3.5 rounded-xl border border-white/10 hover:border-blue-500/40 transition-all duration-300 flex flex-col justify-between bg-white/[0.02] hover:bg-white/[0.04]">
+                  <div className="space-y-1.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <BookOpen size={13} className="text-blue-400 shrink-0" />
+                        <h4 className="text-xs sm:text-sm font-bold font-mono text-white group-hover:text-blue-300 transition-colors truncate">
+                          {repo.name}
+                        </h4>
+                      </div>
+                      <ArrowUpRight size={13} className="text-gray-500 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0" />
+                    </div>
+                    <p className="text-[11px] text-gray-400 font-light leading-relaxed line-clamp-2">
+                      {repo.description || "Public open-source repository on GitHub."}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/5 text-[10px] font-mono text-gray-400">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex items-center gap-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+                        {repo.language || "Code"}
+                      </span>
+                      {repo.stargazers_count > 0 && (
+                        <span className="flex items-center gap-1 text-amber-400">
+                          <Star size={10} fill="currentColor" />
+                          {repo.stargazers_count}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-gray-500">{repo.updated_at}</span>
+                  </div>
+                </SpotlightCard>
+              </a>
+            ))}
+          </div>
+
+          {/* Bottom helper info */}
+          <div className="h-5 px-1 flex items-center justify-between text-[11px] font-mono text-gray-500">
+            <span>Synchronized with GitHub REST API</span>
+            <span className="text-emerald-400/80">● Auto-updating</span>
+          </div>
+        </div>
+
+        {/* Right Side (5 cols): Telemetry Panel (Metrics, Languages, Activity & Velocity) */}
+        <div className="lg:col-span-5 flex flex-col justify-between space-y-3.5">
           {/* Top Header */}
           <div className="h-7 flex items-center justify-between px-1">
             <span className="text-xs font-mono uppercase tracking-widest text-emerald-400 font-semibold flex items-center gap-2">
               <Activity size={14} />
-              Activity & Code Metrics
+              Telemetry & Code Metrics
             </span>
             <span className="text-[11px] font-mono text-emerald-400/90 flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -70,36 +142,36 @@ export function GitHubSection() {
           </div>
 
           {/* Quick Counter Stat Cards */}
-          <div className="grid grid-cols-2 gap-3.5">
-            <SpotlightCard className="p-4 sm:p-5 flex flex-col items-center justify-center text-center border border-white/10">
-              <BookOpen size={20} className="text-blue-400 mb-2" />
-              <span className="text-2xl font-bold font-mono text-white">
+          <div className="grid grid-cols-2 gap-3">
+            <SpotlightCard className="p-3.5 flex flex-col items-center justify-center text-center border border-white/10">
+              <BookOpen size={18} className="text-blue-400 mb-1.5" />
+              <span className="text-xl sm:text-2xl font-bold font-mono text-white">
                 {stats.publicRepos}
               </span>
-              <span className="text-xs text-gray-400 font-light mt-1">Public Repos</span>
+              <span className="text-xs text-gray-400 font-light mt-0.5">Public Repos</span>
             </SpotlightCard>
 
-            <SpotlightCard className="p-4 sm:p-5 flex flex-col items-center justify-center text-center border border-white/10">
-              <Star size={20} className="text-amber-400 mb-2" />
-              <span className="text-2xl font-bold font-mono text-white">
+            <SpotlightCard className="p-3.5 flex flex-col items-center justify-center text-center border border-white/10">
+              <Star size={18} className="text-amber-400 mb-1.5" />
+              <span className="text-xl sm:text-2xl font-bold font-mono text-white">
                 {stats.stars}
               </span>
-              <span className="text-xs text-gray-400 font-light mt-1">Stargazers</span>
+              <span className="text-xs text-gray-400 font-light mt-0.5">Stargazers</span>
             </SpotlightCard>
           </div>
 
           {/* Languages Breakdown Card */}
-          <SpotlightCard className="p-4 sm:p-5 space-y-4 border border-white/10">
+          <SpotlightCard className="p-3.5 space-y-3 border border-white/10">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                <Code size={16} className="text-blue-400" />
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Code size={15} className="text-blue-400" />
                 <span>Language Distribution</span>
               </h3>
               <span className="text-[10px] font-mono text-gray-400">Across Repos</span>
             </div>
 
             {/* Segmented bar */}
-            <div className="h-2.5 w-full rounded-full overflow-hidden flex bg-white/5 p-0.5 gap-0.5">
+            <div className="h-2 w-full rounded-full overflow-hidden flex bg-white/5 p-0.5 gap-0.5">
               {stats.topLanguages.map((lang) => (
                 <div
                   key={lang.name}
@@ -114,12 +186,12 @@ export function GitHubSection() {
             </div>
 
             {/* Language Legend */}
-            <div className="grid grid-cols-2 gap-2 pt-1 font-mono text-xs">
+            <div className="grid grid-cols-2 gap-2 pt-0.5 font-mono text-xs">
               {stats.topLanguages.map((lang) => (
-                <div key={lang.name} className="flex items-center justify-between p-1.5 rounded-lg bg-white/[0.02]">
-                  <div className="flex items-center gap-2">
+                <div key={lang.name} className="flex items-center justify-between p-1 rounded bg-white/[0.02]">
+                  <div className="flex items-center gap-1.5">
                     <span
-                      className="h-2.5 w-2.5 rounded-full shrink-0"
+                      className="h-2 w-2 rounded-full shrink-0"
                       style={{ backgroundColor: lang.color }}
                     />
                     <span className="text-gray-300 text-[11px] truncate">{lang.name}</span>
@@ -130,12 +202,12 @@ export function GitHubSection() {
             </div>
           </SpotlightCard>
 
-          {/* Activity & Velocity Matrix */}
-          <SpotlightCard className="p-4 sm:p-5 space-y-4 border border-white/10">
+          {/* Activity & Velocity Matrix Card */}
+          <SpotlightCard className="p-3.5 space-y-3 border border-white/10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Flame size={16} className="text-amber-400" />
-                <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                <Flame size={15} className="text-amber-400" />
+                <h3 className="text-sm font-bold text-white tracking-tight">
                   Commit Activity & Velocity
                 </h3>
               </div>
@@ -146,22 +218,22 @@ export function GitHubSection() {
 
             {/* Numerical Metrics Row */}
             <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="p-2 rounded-lg bg-white/[0.03] border border-white/5 space-y-0.5">
-                <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block truncate">Yearly Total</span>
-                <span className="text-sm sm:text-base font-bold font-mono text-white">{stats.totalCommits}+</span>
+              <div className="p-1.5 rounded-lg bg-white/[0.03] border border-white/5 space-y-0.5">
+                <span className="text-[9px] font-mono text-gray-400 uppercase tracking-wider block truncate">Yearly Total</span>
+                <span className="text-sm font-bold font-mono text-white">{stats.totalCommits}+</span>
               </div>
-              <div className="p-2 rounded-lg bg-white/[0.03] border border-white/5 space-y-0.5">
-                <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block truncate">This Month</span>
-                <span className="text-sm sm:text-base font-bold font-mono text-emerald-400">+{stats.commitsThisMonth}</span>
+              <div className="p-1.5 rounded-lg bg-white/[0.03] border border-white/5 space-y-0.5">
+                <span className="text-[9px] font-mono text-gray-400 uppercase tracking-wider block truncate">This Month</span>
+                <span className="text-sm font-bold font-mono text-emerald-400">+{stats.commitsThisMonth}</span>
               </div>
-              <div className="p-2 rounded-lg bg-white/[0.03] border border-white/5 space-y-0.5">
-                <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block truncate">Active Streak</span>
-                <span className="text-sm sm:text-base font-bold font-mono text-purple-400">{stats.activeStreak}d</span>
+              <div className="p-1.5 rounded-lg bg-white/[0.03] border border-white/5 space-y-0.5">
+                <span className="text-[9px] font-mono text-gray-400 uppercase tracking-wider block truncate">Active Streak</span>
+                <span className="text-sm font-bold font-mono text-purple-400">{stats.activeStreak}d</span>
               </div>
             </div>
 
             {/* Graphical 1: Contribution Heatmap Grid (Real Data) */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <div className="flex items-center justify-between text-[11px] font-mono text-gray-400">
                 <span>Contribution Heatmap (20 Weeks)</span>
                 <span className="text-emerald-400 text-[10px]">Shipping Cadence</span>
@@ -211,7 +283,7 @@ export function GitHubSection() {
                   </div>
 
                   {/* Legend */}
-                  <div className="flex items-center justify-between pt-2 text-[9px] font-mono text-gray-500">
+                  <div className="flex items-center justify-between pt-1.5 text-[9px] font-mono text-gray-500">
                     <span>Mon - Sun</span>
                     <div className="flex items-center gap-1">
                       <span>Less</span>
@@ -228,7 +300,7 @@ export function GitHubSection() {
             </div>
 
             {/* Graphical 2: Real Weekly Commit Velocity Bar Chart */}
-            <div className="space-y-2 pt-2 border-t border-white/5">
+            <div className="space-y-1.5 pt-2 border-t border-white/5">
               <div className="flex items-center justify-between text-[11px] font-mono text-gray-400">
                 <span className="flex items-center gap-1">
                   <TrendingUp size={12} className="text-emerald-400" />
@@ -237,7 +309,7 @@ export function GitHubSection() {
                 <span className="text-gray-400 font-mono text-[10px]">Peak: {stats.peakWeeklyVelocity}/wk</span>
               </div>
 
-              <div className="h-12 flex items-end gap-1.5 pt-1 px-1">
+              <div className="h-11 flex items-end gap-1.5 pt-1 px-1">
                 {stats.weeklyVelocity.map((w, idx) => {
                   const maxPeak = Math.max(stats.peakWeeklyVelocity, 10);
                   const heightPercent = Math.max(14, Math.round((w.count / maxPeak) * 100));
@@ -276,83 +348,11 @@ export function GitHubSection() {
             href="https://github.com/dheeraj-srma"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full inline-flex items-center justify-center gap-2 p-3.5 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 text-gray-200 hover:text-white font-mono text-xs transition-colors group"
+            className="w-full inline-flex items-center justify-center gap-2 p-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 text-gray-200 hover:text-white font-mono text-xs transition-colors group"
           >
             <span>Visit @dheeraj-srma on GitHub</span>
             <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </a>
-        </div>
-
-        {/* Right Side (7 cols): Repositories Showcase in 2-Column Grid */}
-        <div className="lg:col-span-7 space-y-4">
-          {/* Top Header */}
-          <div className="h-7 flex items-center justify-between px-1">
-            <span className="text-xs font-mono uppercase tracking-widest text-blue-400 font-semibold flex items-center gap-2">
-              <GitBranch size={14} />
-              Featured Public Repositories ({stats.recentRepos.length})
-            </span>
-            <a
-              href="https://github.com/dheeraj-srma?tab=repositories"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[11px] font-mono text-gray-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
-            >
-              <span>View all on GitHub</span>
-              <ArrowUpRight size={12} />
-            </a>
-          </div>
-
-          {/* 2-Column Grid with bounded max-height to prevent distortion if repos increase */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-h-[640px] overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20 scrollbar-track-transparent">
-            {stats.recentRepos.map((repo) => (
-              <a
-                key={repo.name}
-                href={repo.html_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block group"
-              >
-                <SpotlightCard className="h-full p-4.5 rounded-xl border border-white/10 hover:border-blue-500/40 transition-all duration-300 flex flex-col justify-between bg-white/[0.02] hover:bg-white/[0.04]">
-                  <div className="space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <BookOpen size={14} className="text-blue-400 shrink-0" />
-                        <h4 className="text-sm font-bold font-mono text-white group-hover:text-blue-300 transition-colors truncate">
-                          {repo.name}
-                        </h4>
-                      </div>
-                      <ArrowUpRight size={14} className="text-gray-500 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 mt-0.5" />
-                    </div>
-                    <p className="text-xs text-gray-400 font-light leading-relaxed line-clamp-2">
-                      {repo.description || "Public open-source repository on GitHub."}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2.5 mt-3 border-t border-white/5 text-[11px] font-mono text-gray-400">
-                    <div className="flex items-center gap-3">
-                      <span className="flex items-center gap-1.5">
-                        <span className="h-2 w-2 rounded-full bg-blue-400" />
-                        {repo.language || "Code"}
-                      </span>
-                      {repo.stargazers_count > 0 && (
-                        <span className="flex items-center gap-1 text-amber-400">
-                          <Star size={11} fill="currentColor" />
-                          {repo.stargazers_count}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[10px] text-gray-500">{repo.updated_at}</span>
-                  </div>
-                </SpotlightCard>
-              </a>
-            ))}
-          </div>
-
-          {/* Bottom helper info */}
-          <div className="pt-1 px-1 flex items-center justify-between text-[11px] font-mono text-gray-500">
-            <span>Synchronized with GitHub REST & Contribution API</span>
-            <span className="text-emerald-400/80">● Auto-updating</span>
-          </div>
         </div>
       </div>
     </section>
