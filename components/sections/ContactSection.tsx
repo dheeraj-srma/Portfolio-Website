@@ -131,7 +131,7 @@ export function ContactSection() {
                 >
                   <div className="flex items-center gap-2.5">
                     <LinkedinIcon size={16} />
-                    <span>linkedin.com/in/dheerajsharma0025</span>
+                    <span>Dheeraj Sharma</span>
                   </div>
                   <span className="text-gray-500 text-[10px]">Network</span>
                 </a>
