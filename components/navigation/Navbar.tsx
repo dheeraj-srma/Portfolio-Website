@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Terminal, User, Code2, Sparkles, FolderGit2, Mail, Menu, X, Compass, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PERSONAL_INFO } from "@/lib/data";
 
 const NAV_ITEMS = [
   { name: "About", href: "#about", icon: User },
@@ -70,16 +71,19 @@ export function Navbar() {
               : "py-4 bg-white/[0.03] w-full max-w-6xl border-white/10"
           )}
         >
-          {/* Logo / Initials */}
+          {/* Logo / Profile Avatar */}
           <a
             href="#hero"
             onClick={(e) => scrollToSection(e, "#hero")}
-            className="flex items-center gap-2 group cursor-pointer shrink-0"
+            className="flex items-center gap-2.5 group cursor-pointer shrink-0"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 via-purple-600 to-pink-500 p-[1px] transition-transform duration-300 group-hover:scale-105">
-              <div className="flex h-full w-full items-center justify-center rounded-full bg-[#050505]">
-                <span className="font-bold text-xs tracking-tighter text-white">DS</span>
-              </div>
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 via-purple-600 to-pink-500 p-[1.5px] transition-transform duration-300 group-hover:scale-105 shadow-md">
+              <img
+                src={PERSONAL_INFO.avatarUrl}
+                alt={PERSONAL_INFO.name}
+                className="h-full w-full rounded-full object-cover bg-[#050505]"
+              />
+              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border border-[#050505]" />
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-white tracking-tight group-hover:text-blue-400 transition-colors">

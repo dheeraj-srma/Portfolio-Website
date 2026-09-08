@@ -29,20 +29,56 @@ export function HeroSection() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center w-full z-10">
         {/* Left Column: Headline, True Positioning, Grounded Statement, CTAs */}
         <div className="lg:col-span-8 flex flex-col justify-center space-y-8 text-left">
-          {/* Status Badge */}
+          {/* Status Badge & GitHub Profile Photo */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-2.5 self-start px-3.5 py-1.5 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-md"
+            className="flex items-center gap-4 sm:gap-5"
           >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="text-xs font-mono text-gray-300 tracking-wide">
-              Currently building & exploring systems
-            </span>
+            {/* GitHub Profile Photo */}
+            <a
+              href={PERSONAL_INFO.githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative group shrink-0 block cursor-pointer"
+              title="Visit @dheeraj-srma on GitHub"
+            >
+              <div className="absolute -inset-0.5 bg-gradient-to-tr from-blue-500 via-purple-500 to-emerald-400 rounded-full blur-[4px] opacity-70 group-hover:opacity-100 transition duration-300" />
+              <img
+                src={PERSONAL_INFO.avatarUrl}
+                alt={PERSONAL_INFO.name}
+                className="relative h-16 w-16 sm:h-20 sm:w-20 rounded-full object-cover border-2 border-white/20 shadow-xl group-hover:scale-[1.02] transition-transform"
+              />
+              <span
+                className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full bg-emerald-500 border-2 border-[#090D16]"
+                title="Active"
+              />
+            </a>
+
+            <div className="space-y-1.5">
+              <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-md">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-xs font-mono text-gray-300 tracking-wide">
+                  Currently building & exploring systems
+                </span>
+              </div>
+              <div className="text-xs font-mono text-gray-400 flex items-center gap-2 pl-1">
+                <a
+                  href={PERSONAL_INFO.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                >
+                  @dheeraj-srma
+                </a>
+                <span className="text-gray-600">·</span>
+                <span className="text-gray-400">GitHub Verified</span>
+              </div>
+            </div>
           </motion.div>
 
           {/* Simple, Grounded Hero Title */}
