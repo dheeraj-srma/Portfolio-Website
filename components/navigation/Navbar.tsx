@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Terminal, User, Code2, Sparkles, FolderGit2, Mail, Menu, X, Compass, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PERSONAL_INFO } from "@/lib/data";
 
 const NAV_ITEMS = [
   { name: "About", href: "#about", icon: User },
@@ -22,7 +23,7 @@ export function Navbar() {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 40) {
+      if (window.scrollY > 80) {
         setScrolled(true);
       } else {
         setScrolled(false);
@@ -70,16 +71,45 @@ export function Navbar() {
               : "py-4 bg-white/[0.03] w-full max-w-6xl border-white/10"
           )}
         >
-          {/* Logo / Initials */}
+          {/* Logo / Initials or Scrolled Avatar */}
           <a
             href="#hero"
             onClick={(e) => scrollToSection(e, "#hero")}
-            className="flex items-center gap-2 group cursor-pointer shrink-0"
+            className="flex items-center gap-2.5 group cursor-pointer shrink-0"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 via-purple-600 to-pink-500 p-[1px] transition-transform duration-300 group-hover:scale-105">
-              <div className="flex h-full w-full items-center justify-center rounded-full bg-[#050505]">
-                <span className="font-bold text-xs tracking-tighter text-white">DS</span>
-              </div>
+            <div className="relative h-9 w-9">
+              <AnimatePresence mode="wait">
+                {!scrolled ? (
+                  <motion.div
+                    key="ds-monogram"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.6, y: -10 }}
+                    transition={{ duration: 0.25 }}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 via-purple-600 to-pink-500 p-[1px] transition-transform duration-300 group-hover:scale-105"
+                  >
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-[#050505]">
+                      <span className="font-bold text-xs tracking-tighter text-white">DS</span>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="pfp-avatar"
+                    initial={{ opacity: 0, scale: 0.5, y: 15 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.5, y: 15 }}
+                    transition={{ type: "spring", stiffness: 380, damping: 24 }}
+                    className="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 via-purple-600 to-emerald-400 p-[1.5px] shadow-lg group-hover:scale-105"
+                  >
+                    <img
+                      src={PERSONAL_INFO.avatarUrl}
+                      alt={PERSONAL_INFO.name}
+                      className="h-full w-full rounded-full object-cover bg-[#050505]"
+                    />
+                    <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border border-[#050505]" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-white tracking-tight group-hover:text-blue-400 transition-colors">

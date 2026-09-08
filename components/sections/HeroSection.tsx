@@ -1,13 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { ArrowUpRight, Terminal, Sparkles, Code2, Compass, Layers } from "lucide-react";
 import { GithubIcon } from "@/components/common/Icons";
 import { PERSONAL_INFO } from "@/lib/data";
 
 export function HeroSection() {
   const [roleIndex, setRoleIndex] = useState(0);
+
+  // Scroll linked animation for seamless hero avatar -> top bar transition
+  const { scrollY } = useScroll();
+  const avatarOpacity = useTransform(scrollY, [0, 140], [1, 0]);
+  const avatarScale = useTransform(scrollY, [0, 140], [1, 0.55]);
+  const avatarY = useTransform(scrollY, [0, 140], [0, -40]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -26,24 +32,26 @@ export function HeroSection() {
       id="hero"
       className="relative min-h-[92vh] flex items-center justify-center pt-28 pb-16 px-4 md:px-8 max-w-7xl mx-auto overflow-hidden"
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center w-full z-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch w-full z-10">
         {/* Left Column: Headline, True Positioning, Grounded Statement, CTAs */}
-        <div className="lg:col-span-8 flex flex-col justify-center space-y-7 text-left">
-          {/* Status Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-2.5 self-start px-3.5 py-1.5 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-md"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="text-xs font-mono text-gray-300 tracking-wide">
-              Currently building & exploring systems
-            </span>
-          </motion.div>
+        <div className="lg:col-span-8 flex flex-col justify-between h-full space-y-6 text-left">
+          {/* Top Status Badge Row (starts at identical vertical level as right telemetry) */}
+          <div className="h-8 flex items-center">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-md"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-xs font-mono text-gray-300 tracking-wide">
+                Currently building & exploring systems
+              </span>
+            </motion.div>
+          </div>
 
           {/* Unified Profile, Name & GitHub Info Section */}
           <motion.div
@@ -52,25 +60,26 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6"
           >
-            {/* GitHub Profile Photo */}
-            <a
+            {/* Round GitHub Profile Photo with Scroll Animation */}
+            <motion.a
               href={PERSONAL_INFO.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
+              style={{ opacity: avatarOpacity, scale: avatarScale, y: avatarY }}
               className="relative group shrink-0 block cursor-pointer self-start sm:self-center"
               title="Visit @dheeraj-srma on GitHub"
             >
-              <div className="absolute -inset-1 bg-gradient-to-tr from-blue-500 via-purple-500 to-emerald-400 rounded-2xl blur-sm opacity-60 group-hover:opacity-100 transition duration-300" />
+              <div className="absolute -inset-1 bg-gradient-to-tr from-blue-500 via-purple-500 to-emerald-400 rounded-full blur-[4px] opacity-70 group-hover:opacity-100 transition duration-300" />
               <img
                 src={PERSONAL_INFO.avatarUrl}
                 alt={PERSONAL_INFO.name}
-                className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-2xl object-cover border-2 border-white/20 shadow-2xl group-hover:scale-105 transition-transform"
+                className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover border-2 border-white/20 shadow-2xl group-hover:scale-105 transition-transform"
               />
               <span
-                className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-500 border-2 border-[#090D16]"
+                className="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-emerald-500 border-2 border-[#090D16]"
                 title="Active"
               />
-            </a>
+            </motion.a>
 
             {/* Name, Handle & Roles */}
             <div className="space-y-2">
@@ -150,13 +159,23 @@ export function HeroSection() {
           </motion.div>
         </div>
 
-        {/* Right Column: Workstation Telemetry Widget */}
-        <div className="lg:col-span-4 w-full">
+        {/* Right Column: Workstation Telemetry Widget (starts and ends at identical vertical bounds) */}
+        <div className="lg:col-span-4 flex flex-col justify-between h-full space-y-6">
+          {/* Synchronized Top Row */}
+          <div className="h-8 flex items-center justify-between px-1">
+            <span className="text-xs font-mono uppercase tracking-widest text-emerald-400 font-semibold flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Runtime Telemetry
+            </span>
+            <span className="text-[11px] font-mono text-gray-500">Active Node</span>
+          </div>
+
+          {/* Telemetry Card: Stretches perfectly to match bottom baseline of CTA buttons */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="relative rounded-2xl glass-panel p-6 border border-white/15 shadow-2xl space-y-5"
+            className="flex-1 rounded-2xl glass-panel p-6 border border-white/15 shadow-2xl flex flex-col justify-between"
           >
             {/* Terminal Header */}
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
@@ -172,7 +191,7 @@ export function HeroSection() {
             </div>
 
             {/* Quick telemetry lines */}
-            <div className="space-y-3 font-mono text-xs text-gray-300">
+            <div className="space-y-3 font-mono text-xs text-gray-300 py-3">
               <div className="flex justify-between items-center py-1 border-b border-white/5">
                 <span className="text-gray-400">Focus Areas</span>
                 <span className="text-blue-300">AI · ML · Systems</span>
