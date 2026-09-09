@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -32,6 +33,7 @@ interface ProjectModalProps {
 type TabType = "preview" | "story" | "architecture" | "code";
 
 export function ProjectModal({ project, onClose }: ProjectModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("preview");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLocalMode, setIsLocalMode] = useState(false);
@@ -51,14 +53,29 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
   const [nalkaCartCount, setNalkaCartCount] = useState(3);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Lock body scroll while modal is active so background UI doesn't scroll
+  useEffect(() => {
+    if (project) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [project]);
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
-  if (!project) return null;
+    if (project) {
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [onClose, project]);
 
   const handleAuraSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,22 +90,31 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
     setAuraInput("");
   };
 
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 md:p-8 bg-black/85 backdrop-blur-xl overflow-y-auto">
-        {/* Background click to dismiss */}
-        <div className="fixed inset-0 -z-10" onClick={onClose} />
+  if (!mounted) return null;
 
-        {/* Browser / Workstation Frame Window */}
+  return createPortal(
+    <AnimatePresence>
+      {project && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: 15 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 15 }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className={`w-full ${
-            isFullscreen ? "fixed inset-2 z-50 h-[calc(100vh-16px)]" : "max-w-5xl h-[88vh]"
-          } bg-[#0A0A0F] border border-white/15 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-gray-200 transition-all duration-300`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 md:p-8 bg-black/85 backdrop-blur-xl overflow-y-auto"
         >
+          {/* Background click to dismiss */}
+          <div className="fixed inset-0 -z-10" onClick={onClose} />
+
+          {/* Browser / Workstation Frame Window */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 15 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className={`w-full ${
+              isFullscreen ? "fixed inset-2 z-[110] h-[calc(100vh-16px)]" : "max-w-5xl h-[88vh]"
+            } bg-[#0A0A0F] border border-white/15 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-gray-200 transition-all duration-300`}
+          >
           {/* Top Browser Bar */}
           <div className="h-14 px-4 bg-[#0E0E16] border-b border-white/10 flex items-center justify-between gap-4 select-none shrink-0">
             {/* Window Controls (Traffic Lights) */}
@@ -867,7 +893,9 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
             )}
           </div>
         </motion.div>
-      </div>
-    </AnimatePresence>
+      </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 }
