@@ -1,10 +1,116 @@
 "use client";
 
-import React from "react";
-import { motion } from "framer-motion";
-import { Terminal, Cpu, Compass, BookOpen, ArrowRight, Binary } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import { motion, useInView } from "framer-motion";
+import { Terminal, BookOpen } from "lucide-react";
 import { CURRENTLY_BUILDING, CONTINUOUS_LEARNING } from "@/lib/data";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
+
+interface DonutProgressProps {
+  progress: number;
+  gradientId: string;
+  delay?: number;
+}
+
+function DonutProgress({ progress, gradientId, delay = 0 }: DonutProgressProps) {
+  const [displayValue, setDisplayValue] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(containerRef, { once: true, amount: 0.3 });
+
+  const size = 46;
+  const strokeWidth = 3.2;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const targetOffset = circumference - (circumference * progress) / 100;
+
+  useEffect(() => {
+    if (!isInView) return;
+
+    let startTime: number | null = null;
+    const duration = 1200; // 1.2s smooth count-up
+    let animationFrameId: number;
+
+    const timeoutId = setTimeout(() => {
+      const step = (timestamp: number) => {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const progressRatio = Math.min(elapsed / duration, 1);
+        // easeOutCubic
+        const eased = 1 - Math.pow(1 - progressRatio, 3);
+        setDisplayValue(Math.round(eased * progress));
+
+        if (progressRatio < 1) {
+          animationFrameId = requestAnimationFrame(step);
+        }
+      };
+      animationFrameId = requestAnimationFrame(step);
+    }, delay * 1000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    };
+  }, [isInView, progress, delay]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative flex items-center justify-center shrink-0 group/donut"
+      title={`Current build stage: ${progress}%`}
+    >
+      <svg
+        width={size}
+        height={size}
+        className="-rotate-90 transform overflow-visible"
+        aria-label={`Progress: ${progress}%`}
+      >
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#F59E0B" />
+            <stop offset="100%" stopColor="#FBBF24" />
+          </linearGradient>
+        </defs>
+
+        {/* Background track circle */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="transparent"
+          stroke="rgba(255, 255, 255, 0.08)"
+          strokeWidth={strokeWidth}
+        />
+
+        {/* Animated donut loading progress ring */}
+        <motion.circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="transparent"
+          stroke={`url(#${gradientId})`}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          animate={isInView ? { strokeDashoffset: targetOffset } : { strokeDashoffset: circumference }}
+          transition={{
+            duration: 1.3,
+            delay: delay,
+            ease: [0.16, 1, 0.3, 1]
+          }}
+          className="drop-shadow-[0_0_8px_rgba(245,158,11,0.45)]"
+        />
+      </svg>
+
+      {/* Numerical percentage display inside the center of the donut */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <span className="text-[10px] font-mono font-bold text-amber-300 tracking-tighter">
+          {displayValue}%
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export function CurrentlyBuildingSection() {
   return (
@@ -87,7 +193,7 @@ export function CurrentlyBuildingSection() {
                   </div>
 
                   <div className="flex items-center justify-between pt-3 border-t border-white/5 mt-3">
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-1.5 pr-2">
                       {item.tags.map((tag) => (
                         <span
                           key={tag}
@@ -97,9 +203,13 @@ export function CurrentlyBuildingSection() {
                         </span>
                       ))}
                     </div>
-                    <span className="text-[11px] font-mono text-amber-400 font-semibold">
-                      {item.progress}%
-                    </span>
+
+                    {/* Donut Loading Style Progress */}
+                    <DonutProgress
+                      progress={item.progress}
+                      gradientId={`workbench-donut-${index}`}
+                      delay={index * 0.15}
+                    />
                   </div>
                 </SpotlightCard>
               </motion.div>
