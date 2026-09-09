@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useRef, useState, useEffect } from "react";
+import { motion, useInView } from "framer-motion";
 import {
   Star,
   BookOpen,
@@ -15,9 +15,67 @@ import {
 import { GithubIcon } from "@/components/common/Icons";
 import { useGitHubData } from "@/hooks/useGitHubData";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+
+interface AnimatedCounterProps {
+  target: number;
+  prefix?: string;
+  suffix?: string;
+  isInView: boolean;
+  delay?: number;
+}
+
+function AnimatedCounter({ target, prefix = "", suffix = "", isInView, delay = 0 }: AnimatedCounterProps) {
+  const [val, setVal] = useState(0);
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  useEffect(() => {
+    if (!isInView) return;
+
+    if (prefersReducedMotion) {
+      setVal(target);
+      return;
+    }
+
+    let startTime: number | null = null;
+    const duration = 1200;
+    let animationFrameId: number;
+
+    const timeoutId = setTimeout(() => {
+      const step = (timestamp: number) => {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const progressRatio = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progressRatio, 3);
+        setVal(Math.round(eased * target));
+
+        if (progressRatio < 1) {
+          animationFrameId = requestAnimationFrame(step);
+        }
+      };
+      animationFrameId = requestAnimationFrame(step);
+    }, delay * 1000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    };
+  }, [isInView, target, delay, prefersReducedMotion]);
+
+  return (
+    <span>
+      {prefix}
+      {val}
+      {suffix}
+    </span>
+  );
+}
 
 export function GitHubSection() {
   const stats = useGitHubData("dheeraj-srma");
+  const telemetryRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(telemetryRef, { once: true, amount: 0.2 });
+
 
   return (
     <section id="github" className="py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10">
@@ -128,7 +186,7 @@ export function GitHubSection() {
         </div>
 
         {/* Right Side (5 cols): Telemetry Panel (Metrics, Languages, Activity & Velocity) */}
-        <div className="lg:col-span-5 flex flex-col justify-between space-y-3.5">
+        <div ref={telemetryRef} className="lg:col-span-5 flex flex-col justify-between space-y-3.5">
           {/* Top Header */}
           <div className="h-7 flex items-center justify-between px-1">
             <span className="text-xs font-mono uppercase tracking-widest text-emerald-400 font-semibold flex items-center gap-2">
@@ -143,18 +201,18 @@ export function GitHubSection() {
 
           {/* Quick Counter Stat Cards */}
           <div className="grid grid-cols-2 gap-3">
-            <SpotlightCard className="p-3.5 flex flex-col items-center justify-center text-center border border-white/10">
+            <SpotlightCard className="p-3.5 flex flex-col items-center justify-center text-center border border-white/10 hover:border-blue-500/30 transition-colors">
               <BookOpen size={18} className="text-blue-400 mb-1.5" />
               <span className="text-xl sm:text-2xl font-bold font-mono text-white">
-                {stats.publicRepos}
+                <AnimatedCounter target={stats.publicRepos} isInView={isInView} delay={0.1} />
               </span>
               <span className="text-xs text-gray-400 font-light mt-0.5">Public Repos</span>
             </SpotlightCard>
 
-            <SpotlightCard className="p-3.5 flex flex-col items-center justify-center text-center border border-white/10">
+            <SpotlightCard className="p-3.5 flex flex-col items-center justify-center text-center border border-white/10 hover:border-amber-500/30 transition-colors">
               <Star size={18} className="text-amber-400 mb-1.5" />
               <span className="text-xl sm:text-2xl font-bold font-mono text-white">
-                {stats.stars}
+                <AnimatedCounter target={stats.stars} isInView={isInView} delay={0.2} />
               </span>
               <span className="text-xs text-gray-400 font-light mt-0.5">Stargazers</span>
             </SpotlightCard>
@@ -172,14 +230,16 @@ export function GitHubSection() {
 
             {/* Segmented bar */}
             <div className="h-2 w-full rounded-full overflow-hidden flex bg-white/5 p-0.5 gap-0.5">
-              {stats.topLanguages.map((lang) => (
-                <div
+              {stats.topLanguages.map((lang, lIdx) => (
+                <motion.div
                   key={lang.name}
+                  initial={{ width: 0 }}
+                  animate={isInView ? { width: `${lang.percentage}%` } : { width: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2 + lIdx * 0.08, ease: [0.16, 1, 0.3, 1] }}
                   style={{
-                    width: `${lang.percentage}%`,
                     backgroundColor: lang.color
                   }}
-                  className="h-full rounded-full transition-all duration-500"
+                  className="h-full rounded-full"
                   title={`${lang.name}: ${lang.percentage}%`}
                 />
               ))}
@@ -188,7 +248,7 @@ export function GitHubSection() {
             {/* Language Legend */}
             <div className="grid grid-cols-2 gap-2 pt-0.5 font-mono text-xs">
               {stats.topLanguages.map((lang) => (
-                <div key={lang.name} className="flex items-center justify-between p-1 rounded bg-white/[0.02]">
+                <div key={lang.name} className="flex items-center justify-between p-1 rounded bg-white/[0.02] hover:bg-white/[0.05] transition-colors">
                   <div className="flex items-center gap-1.5">
                     <span
                       className="h-2 w-2 rounded-full shrink-0"
@@ -216,19 +276,25 @@ export function GitHubSection() {
               </span>
             </div>
 
-            {/* Numerical Metrics Row */}
+            {/* Numerical Metrics Row with Animated Counters */}
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-1.5 rounded-lg bg-white/[0.03] border border-white/5 space-y-0.5">
                 <span className="text-[9px] font-mono text-gray-400 uppercase tracking-wider block truncate">Yearly Total</span>
-                <span className="text-sm font-bold font-mono text-white">{stats.totalCommits}+</span>
+                <span className="text-sm font-bold font-mono text-white">
+                  <AnimatedCounter target={stats.totalCommits} suffix="+" isInView={isInView} delay={0.15} />
+                </span>
               </div>
               <div className="p-1.5 rounded-lg bg-white/[0.03] border border-white/5 space-y-0.5">
                 <span className="text-[9px] font-mono text-gray-400 uppercase tracking-wider block truncate">This Month</span>
-                <span className="text-sm font-bold font-mono text-emerald-400">+{stats.commitsThisMonth}</span>
+                <span className="text-sm font-bold font-mono text-emerald-400">
+                  <AnimatedCounter target={stats.commitsThisMonth} prefix="+" isInView={isInView} delay={0.25} />
+                </span>
               </div>
               <div className="p-1.5 rounded-lg bg-white/[0.03] border border-white/5 space-y-0.5">
                 <span className="text-[9px] font-mono text-gray-400 uppercase tracking-wider block truncate">Active Streak</span>
-                <span className="text-sm font-bold font-mono text-purple-400">{stats.activeStreak}d</span>
+                <span className="text-sm font-bold font-mono text-purple-400">
+                  <AnimatedCounter target={stats.activeStreak} suffix="d" isInView={isInView} delay={0.35} />
+                </span>
               </div>
             </div>
 
@@ -240,7 +306,7 @@ export function GitHubSection() {
               </div>
 
               {/* Heatmap Matrix Container */}
-              <div className="overflow-x-auto pb-1 scrollbar-none">
+              <div className="overflow-x-auto pb-1 scrollbar-none touch-pan-x">
                 <div className="inline-block min-w-full">
                   {/* Month headers */}
                   <div className="flex justify-between text-[9px] font-mono text-gray-500 mb-1 px-0.5">
@@ -266,7 +332,7 @@ export function GitHubSection() {
                         <div
                           key={`${d.date}-${idx}`}
                           title={`${formattedDate}: ${d.count} commit${d.count === 1 ? "" : "s"}`}
-                          className={`h-2.5 w-2.5 rounded-[2px] transition-transform hover:scale-125 cursor-pointer ${
+                          className={`h-2.5 w-2.5 rounded-[2px] transition-transform duration-200 hover:scale-125 cursor-pointer ${
                             d.level === 0
                               ? "bg-white/[0.04]"
                               : d.level === 1
@@ -319,10 +385,12 @@ export function GitHubSection() {
                       <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-black/95 border border-white/20 text-[9px] font-mono text-emerald-300 px-1.5 py-0.5 rounded shadow whitespace-nowrap z-20">
                         {w.count} commit{w.count === 1 ? "" : "s"}
                       </div>
-                      {/* Velocity Bar */}
-                      <div
-                        style={{ height: `${heightPercent}%` }}
-                        className={`w-full rounded-t transition-all duration-300 group-hover:bg-emerald-400 ${
+                      {/* Animated Velocity Bar */}
+                      <motion.div
+                        initial={{ height: 0 }}
+                        animate={isInView ? { height: `${heightPercent}%` } : { height: 0 }}
+                        transition={{ duration: 0.6, delay: 0.25 + idx * 0.04, ease: [0.16, 1, 0.3, 1] }}
+                        className={`w-full rounded-t transition-colors duration-300 group-hover:bg-emerald-400 ${
                           w.count >= 25
                             ? "bg-gradient-to-t from-emerald-600 to-cyan-400"
                             : w.count >= 10
@@ -344,7 +412,9 @@ export function GitHubSection() {
           </SpotlightCard>
 
           {/* Profile Quick Link */}
-          <a
+          <motion.a
+            whileHover={{ scale: 1.015 }}
+            whileTap={{ scale: 0.98 }}
             href="https://github.com/dheeraj-srma"
             target="_blank"
             rel="noopener noreferrer"
@@ -352,7 +422,7 @@ export function GitHubSection() {
           >
             <span>Visit @dheeraj-srma on GitHub</span>
             <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-          </a>
+          </motion.a>
         </div>
       </div>
     </section>

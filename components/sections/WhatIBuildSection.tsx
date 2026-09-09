@@ -57,16 +57,17 @@ export function WhatIBuildSection() {
           return (
             <motion.div
               key={item.id}
-              initial={{ opacity: 0, y: 25 }}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.08 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{ duration: 0.5, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+              className="h-full"
             >
-              <SpotlightCard className="h-full p-6 sm:p-7 flex flex-col justify-between group border border-white/10 hover:border-white/20 transition-all duration-300">
+              <SpotlightCard className="h-full p-6 sm:p-7 flex flex-col justify-between group border border-white/10 hover:border-white/25 transition-all duration-300 hover:shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
                 <div className="space-y-4">
                   {/* Icon & Category Header */}
                   <div className="flex items-center justify-between">
-                    <div className="h-12 w-12 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-blue-400 group-hover:scale-110 group-hover:text-white transition-all duration-300">
+                    <div className="h-12 w-12 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-blue-400 group-hover:scale-110 group-hover:text-white group-hover:border-blue-500/40 group-hover:shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all duration-300">
                       <Icon size={24} />
                     </div>
                     <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">
@@ -90,7 +91,7 @@ export function WhatIBuildSection() {
                   </p>
                 </div>
 
-                {/* Practical Examples */}
+                {/* Practical Examples with micro-interactions */}
                 <div className="mt-6 pt-4 border-t border-white/5 space-y-2">
                   <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">
                     Representative Work:
@@ -99,7 +100,7 @@ export function WhatIBuildSection() {
                     {item.examples.map((ex) => (
                       <span
                         key={ex}
-                        className="px-2 py-0.5 rounded text-[11px] font-mono bg-white/[0.03] text-gray-300 border border-white/10"
+                        className="px-2 py-0.5 rounded text-[11px] font-mono bg-white/[0.03] text-gray-300 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] hover:text-white transition-colors"
                       >
                         {ex}
                       </span>

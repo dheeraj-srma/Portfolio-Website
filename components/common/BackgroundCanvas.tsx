@@ -13,6 +13,11 @@ export function BackgroundCanvas() {
     if (!ctx) return;
 
     let animationFrameId: number;
+    let prefersReduced = false;
+
+    if (typeof window !== "undefined" && window.matchMedia) {
+      prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    }
 
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
@@ -22,11 +27,12 @@ export function BackgroundCanvas() {
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    // Cosmic starfield particles
+    // Cosmic starfield particles with 3D depth (z)
     const particleCount = Math.min(Math.floor(window.innerWidth / 14), 110);
     const particles: {
       x: number;
       y: number;
+      z: number; // 3D depth layer factor (0.4 to 1.6)
       radius: number;
       baseAlpha: number;
       alpha: number;
@@ -44,110 +50,134 @@ export function BackgroundCanvas() {
     ];
 
     for (let i = 0; i < particleCount; i++) {
-      const baseAlpha = Math.random() * 0.6 + 0.15;
+      const z = Math.random() * 1.2 + 0.4;
+      const baseAlpha = (Math.random() * 0.5 + 0.2) * (z > 1 ? 1 : 0.8);
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        radius: Math.random() * 1.4 + 0.4,
+        z,
+        radius: (Math.random() * 1.2 + 0.5) * (0.6 + z * 0.4),
         baseAlpha,
         alpha: baseAlpha,
-        pulseSpeed: (Math.random() * 0.02 + 0.005) * (Math.random() > 0.5 ? 1 : -1),
-        vx: (Math.random() - 0.5) * 0.15,
-        vy: (Math.random() - 0.5) * 0.15,
+        pulseSpeed: (Math.random() * 0.015 + 0.005) * (Math.random() > 0.5 ? 1 : -1),
+        vx: (Math.random() - 0.5) * 0.12 * z,
+        vy: (Math.random() - 0.5) * 0.12 * z,
         color: starColors[Math.floor(Math.random() * starColors.length)]
       });
     }
 
-    let mouseX = canvas.width / 2;
-    let mouseY = canvas.height / 2;
+    let targetMouseX = canvas.width / 2;
+    let targetMouseY = canvas.height / 2;
+    let mouseX = targetMouseX;
+    let mouseY = targetMouseY;
+    let scrollY = window.scrollY;
 
     const handleMouseMove = (e: MouseEvent) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
+      if (prefersReduced) return;
+      targetMouseX = e.clientX;
+      targetMouseY = e.clientY;
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
+    const handleScroll = () => {
+      scrollY = window.scrollY;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
     let tick = 0;
 
     const render = () => {
-      tick += 0.005;
+      tick += 0.006;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Subtle celestial orbit rings in background
-      const cx = canvas.width * 0.85;
-      const cy = canvas.height * 0.2;
+      // Smooth mouse interpolation (lerp)
+      if (!prefersReduced) {
+        mouseX += (targetMouseX - mouseX) * 0.04;
+        mouseY += (targetMouseY - mouseY) * 0.04;
+      }
+
+      // Mouse offset normalized (-0.5 to 0.5)
+      const mouseOffsetX = (mouseX / canvas.width - 0.5) * 30;
+      const mouseOffsetY = (mouseY / canvas.height - 0.5) * 30;
+
+      // Subtle celestial orbit rings in background with gentle pulse
+      const cx = canvas.width * 0.85 + (prefersReduced ? 0 : mouseOffsetX * 0.2);
+      const cy = canvas.height * 0.2 + (prefersReduced ? 0 : mouseOffsetY * 0.2);
+      const orbitPulse = prefersReduced ? 0 : Math.sin(tick * 0.4) * 5;
 
       ctx.save();
-      ctx.strokeStyle = "rgba(168, 85, 247, 0.035)";
+      ctx.strokeStyle = "rgba(168, 85, 247, 0.038)";
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 12]);
 
       // Orbital ellipse 1
       ctx.beginPath();
-      ctx.ellipse(cx, cy, 340, 180, Math.PI / 6, 0, Math.PI * 2);
+      ctx.ellipse(cx, cy, 340 + orbitPulse, 180 + orbitPulse * 0.5, Math.PI / 6, 0, Math.PI * 2);
       ctx.stroke();
 
       // Orbital ellipse 2
       ctx.beginPath();
-      ctx.ellipse(cx, cy, 520, 280, Math.PI / 6, 0, Math.PI * 2);
+      ctx.ellipse(cx, cy, 520 - orbitPulse, 280 - orbitPulse * 0.5, Math.PI / 6, 0, Math.PI * 2);
       ctx.stroke();
 
       // Lower left coordinate circle
-      ctx.strokeStyle = "rgba(59, 130, 246, 0.025)";
+      ctx.strokeStyle = "rgba(59, 130, 246, 0.028)";
       ctx.beginPath();
-      ctx.ellipse(canvas.width * 0.1, canvas.height * 0.85, 400, 220, -Math.PI / 8, 0, Math.PI * 2);
+      ctx.ellipse(canvas.width * 0.1, canvas.height * 0.85, 400 + orbitPulse * 0.6, 220 + orbitPulse * 0.3, -Math.PI / 8, 0, Math.PI * 2);
       ctx.stroke();
 
       ctx.restore();
 
-      // Render stars & subtle dynamic constellation lines
+      // Render stars with 3D depth & parallax
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
 
-        // Move
-        p.x += p.vx;
-        p.y += p.vy;
+        if (!prefersReduced) {
+          // Move according to velocity
+          p.x += p.vx;
+          p.y += p.vy;
 
-        // Twinkle
-        p.alpha += p.pulseSpeed;
-        if (p.alpha > 0.85 || p.alpha < 0.1) {
-          p.pulseSpeed = -p.pulseSpeed;
+          // Twinkle
+          p.alpha += p.pulseSpeed;
+          if (p.alpha > 0.85 || p.alpha < 0.1) {
+            p.pulseSpeed = -p.pulseSpeed;
+          }
+
+          // Screen wrap
+          if (p.x < 0) p.x = canvas.width;
+          if (p.x > canvas.width) p.x = 0;
+          if (p.y < 0) p.y = canvas.height;
+          if (p.y > canvas.height) p.y = 0;
         }
 
-        // Screen wrap
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
-
-        // Subtle reaction to mouse
-        const dx = mouseX - p.x;
-        const dy = mouseY - p.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 130) {
-          p.x -= (dx / dist) * 0.25;
-          p.y -= (dy / dist) * 0.25;
-        }
+        // Apply 3D parallax based on depth factor z and mouse/scroll
+        const drawX = p.x + (prefersReduced ? 0 : mouseOffsetX * p.z);
+        const drawY = p.y + (prefersReduced ? 0 : (mouseOffsetY * p.z - (scrollY * 0.03 * p.z) % canvas.height));
 
         // Draw star
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `${p.color} ${p.alpha})`;
+        ctx.arc(drawX, drawY, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `${p.color} ${Math.max(0.08, p.alpha)})`;
         ctx.fill();
 
-        // Connect nearby stars with faint cosmic filaments
+        // Connect nearby stars with faint cosmic filaments (only within same depth band)
         for (let j = i + 1; j < particles.length; j++) {
           const p2 = particles[j];
-          const cdx = p.x - p2.x;
-          const cdy = p.y - p2.y;
+          if (Math.abs(p.z - p2.z) > 0.6) continue;
+
+          const p2DrawX = p2.x + (prefersReduced ? 0 : mouseOffsetX * p2.z);
+          const p2DrawY = p2.y + (prefersReduced ? 0 : (mouseOffsetY * p2.z - (scrollY * 0.03 * p2.z) % canvas.height));
+
+          const cdx = drawX - p2DrawX;
+          const cdy = drawY - p2DrawY;
           const cdist = Math.sqrt(cdx * cdx + cdy * cdy);
 
-          if (cdist < 95) {
+          if (cdist < 90) {
             ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(p2.x, p2.y);
-            const lineAlpha = (1 - cdist / 95) * 0.05;
+            ctx.moveTo(drawX, drawY);
+            ctx.lineTo(p2DrawX, p2DrawY);
+            const lineAlpha = (1 - cdist / 90) * 0.045 * Math.min(p.z, p2.z);
             ctx.strokeStyle = `rgba(147, 197, 253, ${lineAlpha})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
@@ -163,6 +193,7 @@ export function BackgroundCanvas() {
     return () => {
       window.removeEventListener("resize", resizeCanvas);
       window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("scroll", handleScroll);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);

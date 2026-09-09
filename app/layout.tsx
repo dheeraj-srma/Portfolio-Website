@@ -83,14 +83,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark scroll-smooth">
+    <html lang="en" className="dark scroll-smooth" suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`${inter.variable} font-sans antialiased bg-[#050505] text-white`}>
+      <body
+        className={`${inter.variable} font-sans antialiased bg-[#050505] text-white`}
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>

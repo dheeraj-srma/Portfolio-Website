@@ -68,11 +68,13 @@ export function ProjectsSection() {
           Grounded systems, medical deep learning, enterprise inventory portals, and empirical ML explorations.
         </motion.p>
 
-        {/* Filter Pills */}
+        {/* Filter Pills with micro-interactions */}
         <div className="flex flex-wrap justify-center gap-2 pt-6">
           {filters.map((f) => (
-            <button
+            <motion.button
               key={f.id}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => setActiveFilter(f.id)}
               className={`px-4 py-2 rounded-xl text-xs font-mono transition-all cursor-pointer ${
                 activeFilter === f.id
@@ -81,24 +83,24 @@ export function ProjectsSection() {
               }`}
             >
               {f.label}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
 
       {/* Projects Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <AnimatePresence>
+        <AnimatePresence mode="popLayout">
           {filteredProjects.map((project, index) => (
             <motion.div
               key={project.id}
               layout
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 24, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.4, delay: index * 0.05 }}
+              transition={{ duration: 0.4, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
             >
-              <SpotlightCard className="h-full flex flex-col justify-between group overflow-hidden border border-white/10 hover:border-blue-500/40 transition-all duration-300">
+              <SpotlightCard className="h-full flex flex-col justify-between group overflow-hidden border border-white/10 hover:border-blue-500/40 transition-all duration-300 hover:shadow-[0_12px_36px_rgba(0,0,0,0.5)]">
                 <div className="space-y-5">
                   {/* Visual Top Banner */}
                   <div
@@ -170,17 +172,21 @@ export function ProjectsSection() {
                   </div>
                 </div>
 
-                {/* Card Interactive Trigger Actions */}
+                {/* Card Interactive Trigger Actions with micro-interactions */}
                 <div className="pt-6 mt-6 border-t border-white/5 flex items-center justify-between gap-2">
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => setSelectedProject(project)}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 text-xs font-mono transition-all cursor-pointer"
                   >
                     <Play size={12} />
                     <span>Live Preview & Story</span>
-                  </button>
+                  </motion.button>
 
-                  <a
+                  <motion.a
+                    whileHover={{ scale: 1.08 }}
+                    whileTap={{ scale: 0.94 }}
                     href={project.githubUrl}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -188,7 +194,7 @@ export function ProjectsSection() {
                     title="View GitHub Repository"
                   >
                     <GithubIcon size={14} />
-                  </a>
+                  </motion.a>
                 </div>
               </SpotlightCard>
             </motion.div>

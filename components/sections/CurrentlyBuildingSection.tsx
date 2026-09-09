@@ -5,6 +5,7 @@ import { motion, useInView } from "framer-motion";
 import { Terminal, BookOpen } from "lucide-react";
 import { CURRENTLY_BUILDING, CONTINUOUS_LEARNING } from "@/lib/data";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 interface DonutProgressProps {
   progress: number;
@@ -16,6 +17,7 @@ function DonutProgress({ progress, gradientId, delay = 0 }: DonutProgressProps) 
   const [displayValue, setDisplayValue] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(containerRef, { once: true, amount: 0.3 });
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const size = 46;
   const strokeWidth = 3.2;
@@ -25,6 +27,11 @@ function DonutProgress({ progress, gradientId, delay = 0 }: DonutProgressProps) 
 
   useEffect(() => {
     if (!isInView) return;
+
+    if (prefersReducedMotion) {
+      setDisplayValue(progress);
+      return;
+    }
 
     let startTime: number | null = null;
     const duration = 1200; // 1.2s smooth count-up
@@ -50,7 +57,7 @@ function DonutProgress({ progress, gradientId, delay = 0 }: DonutProgressProps) 
       clearTimeout(timeoutId);
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
-  }, [isInView, progress, delay]);
+  }, [isInView, progress, delay, prefersReducedMotion]);
 
   return (
     <div

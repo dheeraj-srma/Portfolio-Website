@@ -26,11 +26,11 @@ export function Navbar() {
       const scrollY = window.scrollY;
       setScrolled(scrollY > 40);
 
-      // Active section detection
+      // Active section detection with balanced midpoint offset
       const sections = NAV_ITEMS.map((item) => item.href.substring(1));
-      const scrollPosition = scrollY + 220;
+      const scrollPosition = scrollY + 240;
 
-      if (scrollY < 120) {
+      if (scrollY < 140) {
         setActiveSection("about");
         return;
       }
@@ -131,20 +131,22 @@ export function Navbar() {
             </div>
           </a>
 
-          {/* Desktop Navigation Links */}
+          {/* Desktop Navigation Links with subtle hover micro-interactions */}
           <div className="hidden lg:flex items-center gap-1 bg-white/[0.03] p-1.5 rounded-full border border-white/5">
             {NAV_ITEMS.map((item) => {
               const isActive = activeSection === item.href.substring(1);
               return (
-                <a
+                <motion.a
                   key={item.name}
                   href={item.href}
                   onClick={(e) => scrollToSection(e, item.href)}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.97 }}
                   className={cn(
                     "relative px-3.5 py-1.5 text-xs font-medium rounded-full cursor-pointer select-none transition-colors duration-200",
                     isActive
                       ? "text-white font-semibold"
-                      : "text-gray-400 hover:text-gray-200"
+                      : "text-gray-400 hover:text-gray-100"
                   )}
                 >
                   {isActive && (
@@ -160,70 +162,88 @@ export function Navbar() {
                     />
                   )}
                   <span className="relative z-10">{item.name}</span>
-                </a>
+                </motion.a>
               );
             })}
           </div>
 
           {/* CTA Right Action */}
           <div className="hidden sm:flex items-center gap-3 shrink-0">
-            <a
+            <motion.a
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.96 }}
               href="#contact"
               onClick={(e) => scrollToSection(e, "#contact")}
-              className="relative inline-flex items-center justify-center p-0.5 overflow-hidden text-xs font-semibold rounded-full group bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105 active:scale-95"
+              className="relative inline-flex items-center justify-center p-0.5 overflow-hidden text-xs font-semibold rounded-full group bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg hover:shadow-blue-500/25 transition-all duration-300"
             >
               <span className="px-4 py-1.5 transition-all ease-in duration-75 bg-[#0A0A0C] rounded-full group-hover:bg-transparent">
                 Connect
               </span>
-            </a>
+            </motion.a>
           </div>
 
           {/* Mobile Hamburger Button */}
-          <button
+          <motion.button
+            whileTap={{ scale: 0.9 }}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden flex h-9 w-9 items-center justify-center rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white"
+            className="lg:hidden flex h-9 w-9 items-center justify-center rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white cursor-pointer"
             aria-label="Toggle Navigation"
           >
             {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
-          </button>
+          </motion.button>
         </motion.nav>
       </header>
 
       {/* Mobile Floating Menu Overlay */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-x-4 top-20 z-40 lg:hidden rounded-2xl glass-panel p-4 border border-white/15 bg-[#0A0A0D]/95 shadow-2xl backdrop-blur-2xl"
-          >
-            <div className="grid grid-cols-2 gap-2">
-              {NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeSection === item.href.substring(1);
-                return (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    onClick={(e) => scrollToSection(e, item.href)}
-                    className={cn(
-                      "flex items-center gap-3 p-3 rounded-xl border text-sm font-medium transition-all",
-                      isActive
-                        ? "bg-gradient-to-r from-blue-600/30 to-purple-600/30 border-blue-500/50 text-white font-semibold"
-                        : "bg-white/[0.02] border-white/5 text-gray-400 hover:text-white hover:bg-white/[0.05]"
-                    )}
-                  >
-                    <Icon size={16} className={isActive ? "text-blue-400" : "text-gray-400"} />
-                    <span>{item.name}</span>
-                  </a>
-                );
-              })}
-            </div>
-          </motion.div>
+          <>
+            {/* Backdrop touch listener */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 z-40 lg:hidden bg-black/50 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.97 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="fixed inset-x-4 top-20 z-50 lg:hidden rounded-2xl glass-panel p-4 border border-white/15 bg-[#0A0A0D]/95 shadow-2xl backdrop-blur-2xl"
+            >
+              <div className="grid grid-cols-2 gap-2">
+                {NAV_ITEMS.map((item, index) => {
+                  const Icon = item.icon;
+                  const isActive = activeSection === item.href.substring(1);
+                  return (
+                    <motion.a
+                      key={item.name}
+                      href={item.href}
+                      onClick={(e) => scrollToSection(e, item.href)}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.03, duration: 0.2 }}
+                      whileTap={{ scale: 0.97 }}
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-xl border text-sm font-medium transition-all active:scale-98",
+                        isActive
+                          ? "bg-gradient-to-r from-blue-600/30 to-purple-600/30 border-blue-500/50 text-white font-semibold"
+                          : "bg-white/[0.02] border-white/5 text-gray-400 hover:text-white hover:bg-white/[0.05]"
+                      )}
+                    >
+                      <Icon size={16} className={isActive ? "text-blue-400" : "text-gray-400"} />
+                      <span>{item.name}</span>
+                    </motion.a>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>
   );
 }
+

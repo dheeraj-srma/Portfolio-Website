@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { VERIFIED_STATS } from "@/lib/data";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 interface AnimatedStatNumberProps {
   value: string;
@@ -13,12 +14,18 @@ interface AnimatedStatNumberProps {
 
 function AnimatedStatNumber({ value, isInView, delay = 0 }: AnimatedStatNumberProps) {
   const [current, setCurrent] = useState(0);
+  const prefersReducedMotion = usePrefersReducedMotion();
   const hasPlus = value.includes("+");
   const target = parseInt(value.replace(/[^0-9]/g, ""), 10) || 0;
   const isLarge = target > 100;
 
   useEffect(() => {
     if (!isInView) return;
+
+    if (prefersReducedMotion) {
+      setCurrent(target);
+      return;
+    }
 
     let startTime: number | null = null;
     // Tailor duration: large numbers have slightly longer trajectory, smaller counts resolve cleanly
@@ -46,7 +53,7 @@ function AnimatedStatNumber({ value, isInView, delay = 0 }: AnimatedStatNumberPr
       clearTimeout(timeoutId);
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
-  }, [isInView, target, delay, isLarge]);
+  }, [isInView, target, delay, isLarge, prefersReducedMotion]);
 
   const formattedValue = target >= 1000 ? current.toLocaleString("en-US") : current.toString();
 

@@ -71,8 +71,14 @@ export function ContactSection() {
       {/* Synchronized Parallel Two-Panel Grid (Starts and Ends at Same Vertical Level) */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
         {/* Left Side: Direct Channels (Stretches to match exact height of right form) */}
-        <div className="md:col-span-5 flex flex-col h-full">
-          <SpotlightCard className="h-full p-8 flex flex-col justify-between border border-white/10">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="md:col-span-5 flex flex-col h-full"
+        >
+          <SpotlightCard className="h-full p-8 flex flex-col justify-between border border-white/10 hover:border-white/20 transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
             {/* Top Block: Title & Direct Email */}
             <div className="space-y-6">
               <div className="space-y-2">
@@ -84,7 +90,7 @@ export function ContactSection() {
                 </p>
               </div>
 
-              {/* Email Box */}
+              {/* Email Box with copy micro-interaction */}
               <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
                 <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">
                   Direct Email
@@ -93,69 +99,79 @@ export function ContactSection() {
                   <span className="text-xs font-mono text-white truncate">
                     {PERSONAL_INFO.email}
                   </span>
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
                     onClick={handleCopyEmail}
                     className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors shrink-0 cursor-pointer"
                     title="Copy email"
                   >
                     {copied ? <CheckCircle2 size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             </div>
 
-            {/* Bottom Block: Find Me On Links */}
+            {/* Bottom Block: Find Me On Links with smooth hover */}
             <div className="space-y-3 pt-6">
               <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">
                 Find Me On
               </span>
               <div className="flex flex-col gap-2.5 font-mono text-xs">
-                <a
+                <motion.a
+                  whileHover={{ x: 3 }}
                   href={PERSONAL_INFO.githubUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-blue-500/30 flex items-center justify-between text-gray-300 hover:text-white transition-colors"
+                  className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-blue-500/30 hover:bg-white/[0.05] flex items-center justify-between text-gray-300 hover:text-white transition-all"
                 >
                   <div className="flex items-center gap-2.5">
                     <GithubIcon size={16} />
                     <span>github.com/dheeraj-srma</span>
                   </div>
                   <span className="text-gray-500 text-[10px]">Code & Repos</span>
-                </a>
+                </motion.a>
 
-                <a
+                <motion.a
+                  whileHover={{ x: 3 }}
                   href={PERSONAL_INFO.linkedinUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-blue-500/30 flex items-center justify-between text-gray-300 hover:text-white transition-colors"
+                  className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-blue-500/30 hover:bg-white/[0.05] flex items-center justify-between text-gray-300 hover:text-white transition-all"
                 >
                   <div className="flex items-center gap-2.5">
                     <LinkedinIcon size={16} />
                     <span>Dheeraj Sharma</span>
                   </div>
                   <span className="text-gray-500 text-[10px]">Network</span>
-                </a>
+                </motion.a>
 
-                <a
+                <motion.a
+                  whileHover={{ x: 3 }}
                   href={PERSONAL_INFO.instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-pink-500/30 flex items-center justify-between text-gray-300 hover:text-white transition-colors"
+                  className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-pink-500/30 hover:bg-white/[0.05] flex items-center justify-between text-gray-300 hover:text-white transition-all"
                 >
                   <div className="flex items-center gap-2.5">
                     <InstagramIcon size={16} />
                     <span>@srma_g_ka_beta</span>
                   </div>
                   <span className="text-gray-500 text-[10px]">Personal</span>
-                </a>
+                </motion.a>
               </div>
             </div>
           </SpotlightCard>
-        </div>
+        </motion.div>
 
         {/* Right Side: Message Form */}
-        <div className="md:col-span-7 flex flex-col h-full">
-          <SpotlightCard className="h-full p-8 flex flex-col justify-between border border-white/10">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="md:col-span-7 flex flex-col h-full"
+        >
+          <SpotlightCard className="h-full p-8 flex flex-col justify-between border border-white/10 hover:border-white/20 transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
             <form onSubmit={handleSubmit} className="flex flex-col justify-between h-full space-y-5">
               <div>
                 <h3 className="text-xl font-bold text-white tracking-tight mb-2">
@@ -213,10 +229,12 @@ export function ContactSection() {
                 </div>
               </div>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.015 }}
+                whileTap={{ scale: 0.985 }}
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_0_20px_rgba(59,130,246,0.3)] mt-2"
+                className="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] mt-2"
               >
                 {loading ? (
                   <span>Preparing Message...</span>
@@ -231,10 +249,10 @@ export function ContactSection() {
                     <span>Send Message</span>
                   </>
                 )}
-              </button>
+              </motion.button>
             </form>
           </SpotlightCard>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

@@ -48,14 +48,20 @@ export function JourneySection() {
             key={item.title}
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: index * 0.08 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.5, delay: index * 0.09, ease: [0.16, 1, 0.3, 1] }}
             className="relative group"
           >
-            {/* Timeline Marker Dot */}
-            <div className="absolute -left-[31px] sm:-left-[39px] top-1.5 h-4 w-4 rounded-full bg-[#050505] border-2 border-blue-500 group-hover:scale-125 group-hover:border-purple-400 transition-all shadow-[0_0_10px_rgba(59,130,246,0.6)]" />
+            {/* Timeline Marker Dot with subtle glow pulse */}
+            <motion.div
+              initial={{ scale: 0.6, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: index * 0.09 + 0.1 }}
+              className="absolute -left-[31px] sm:-left-[39px] top-1.5 h-4 w-4 rounded-full bg-[#050505] border-2 border-blue-500 group-hover:scale-125 group-hover:border-purple-400 transition-all duration-300 shadow-[0_0_10px_rgba(59,130,246,0.6)] group-hover:shadow-[0_0_14px_rgba(168,85,247,0.7)]"
+            />
 
-            <SpotlightCard className="p-6 space-y-3 border border-white/10 hover:border-white/20 transition-colors">
+            <SpotlightCard className="p-6 space-y-3 border border-white/10 hover:border-white/20 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
               {/* Meta Header */}
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -86,7 +92,7 @@ export function JourneySection() {
                 {item.tags.map((t) => (
                   <span
                     key={t}
-                    className="px-2 py-0.5 rounded text-[10px] font-mono bg-white/[0.03] text-gray-400 border border-white/5"
+                    className="px-2 py-0.5 rounded text-[10px] font-mono bg-white/[0.03] text-gray-400 border border-white/5 hover:border-white/20 hover:bg-white/[0.08] hover:text-white transition-colors"
                   >
                     {t}
                   </span>

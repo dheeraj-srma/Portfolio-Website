@@ -1,13 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
-import { ArrowUpRight, Terminal, Sparkles, Code2, Compass, Layers } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
+import { ArrowUpRight, Terminal } from "lucide-react";
 import { GithubIcon } from "@/components/common/Icons";
 import { PERSONAL_INFO } from "@/lib/data";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 export function HeroSection() {
   const [roleIndex, setRoleIndex] = useState(0);
+  const heroRef = useRef<HTMLElement>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   // Scroll linked animation for seamless hero avatar -> top bar transition
   const { scrollY } = useScroll();
@@ -17,6 +20,42 @@ export function HeroSection() {
   const avatarWidth = useTransform(scrollY, [0, 90], [96, 0]);
   const avatarMarginRight = useTransform(scrollY, [0, 90], [24, 0]);
   const avatarPointerEvents = useTransform(scrollY, (v) => (v > 60 ? "none" : "auto"));
+
+  // Subtle 3D cursor parallax on telemetry panel
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const springConfig = { damping: 25, stiffness: 200, mass: 0.5 };
+  const cardRotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [4, -4]), springConfig);
+  const cardRotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-4, 4]), springConfig);
+  const cardTranslateX = useSpring(useTransform(mouseX, [-0.5, 0.5], [-8, 8]), springConfig);
+  const cardTranslateY = useSpring(useTransform(mouseY, [-0.5, 0.5], [-8, 8]), springConfig);
+
+  const [isHoverDevice, setIsHoverDevice] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.matchMedia) {
+      const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+      setIsHoverDevice(mq.matches);
+      const listener = (e: MediaQueryListEvent) => setIsHoverDevice(e.matches);
+      mq.addEventListener("change", listener);
+      return () => mq.removeEventListener("change", listener);
+    }
+  }, []);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    if (prefersReducedMotion || !isHoverDevice || !heroRef.current) return;
+    const rect = heroRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -33,6 +72,9 @@ export function HeroSection() {
   return (
     <section
       id="hero"
+      ref={heroRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       className="relative min-h-[92vh] flex items-center justify-center pt-28 pb-16 px-4 md:px-8 max-w-7xl mx-auto overflow-hidden"
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch w-full z-10">
@@ -137,38 +179,44 @@ export function HeroSection() {
             and mechanics, not just importing library calls.
           </motion.p>
 
-          {/* CTA Action Buttons */}
+          {/* CTA Action Buttons with micro-interactions */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-wrap items-center gap-3 pt-2"
           >
-            <button
+            <motion.button
+              whileHover={{ scale: 1.025 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => scrollToSection("projects")}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm transition-all shadow-[0_0_25px_rgba(59,130,246,0.3)] hover:shadow-[0_0_35px_rgba(59,130,246,0.5)] cursor-pointer"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm transition-colors shadow-[0_0_25px_rgba(59,130,246,0.3)] hover:shadow-[0_0_35px_rgba(59,130,246,0.5)] cursor-pointer"
             >
               <span>Explore Projects</span>
               <ArrowUpRight size={16} />
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.025 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => scrollToSection("currently-building")}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl glass-panel glass-panel-hover text-gray-300 hover:text-white font-medium text-sm transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl glass-panel glass-panel-hover text-gray-300 hover:text-white font-medium text-sm transition-colors cursor-pointer"
             >
               <Terminal size={16} className="text-purple-400" />
               <span>What I'm Building Now</span>
-            </button>
+            </motion.button>
 
-            <a
+            <motion.a
+              whileHover={{ scale: 1.025 }}
+              whileTap={{ scale: 0.98 }}
               href={PERSONAL_INFO.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 text-gray-300 hover:text-white font-medium text-sm transition-all"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 text-gray-300 hover:text-white font-medium text-sm transition-colors"
             >
               <GithubIcon size={16} />
               <span>GitHub</span>
-            </a>
+            </motion.a>
           </motion.div>
         </div>
 
@@ -183,12 +231,19 @@ export function HeroSection() {
             <span className="text-[11px] font-mono text-gray-500">Active Node</span>
           </div>
 
-          {/* Telemetry Card: Stretches perfectly to match bottom baseline of CTA buttons */}
+          {/* Telemetry Card: 3D perspective & subtle spring parallax */}
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="flex-1 rounded-2xl glass-panel p-6 border border-white/15 shadow-2xl flex flex-col justify-between"
+            style={{
+              perspective: 1000,
+              rotateX: !prefersReducedMotion && isHoverDevice ? cardRotateX : 0,
+              rotateY: !prefersReducedMotion && isHoverDevice ? cardRotateY : 0,
+              x: !prefersReducedMotion && isHoverDevice ? cardTranslateX : 0,
+              y: !prefersReducedMotion && isHoverDevice ? cardTranslateY : 0,
+            }}
+            className="flex-1 rounded-2xl glass-panel p-6 border border-white/15 shadow-2xl flex flex-col justify-between transition-shadow duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.7)]"
           >
             {/* Terminal Header */}
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
@@ -234,3 +289,4 @@ export function HeroSection() {
     </section>
   );
 }
+

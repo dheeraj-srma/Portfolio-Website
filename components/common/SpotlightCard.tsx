@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 interface SpotlightCardProps {
   children: React.ReactNode;
@@ -22,10 +23,24 @@ export function SpotlightCard({
   id,
 }: SpotlightCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [opacity, setOpacity] = useState(0);
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
+  const [canHover, setCanHover] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.matchMedia) {
+      const hoverQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+      setCanHover(hoverQuery.matches);
+      const listener = (e: MediaQueryListEvent) => setCanHover(e.matches);
+      hoverQuery.addEventListener("change", listener);
+      return () => hoverQuery.removeEventListener("change", listener);
+    }
+  }, []);
+
+  const shouldTilt = enableTilt && canHover && !prefersReducedMotion;
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
@@ -35,11 +50,11 @@ export function SpotlightCard({
     setPosition({ x, y });
     setOpacity(1);
 
-    if (enableTilt) {
+    if (shouldTilt) {
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
-      const rX = ((y - centerY) / centerY) * -6; // max 6 deg tilt
-      const rY = ((x - centerX) / centerX) * 6;
+      const rX = ((y - centerY) / centerY) * -5; // max 5 deg tilt
+      const rY = ((x - centerX) / centerX) * 5;
       setRotateX(rX);
       setRotateY(rY);
     }
@@ -59,10 +74,10 @@ export function SpotlightCard({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       animate={{
-        rotateX: rotateX,
-        rotateY: rotateY,
+        rotateX: shouldTilt ? rotateX : 0,
+        rotateY: shouldTilt ? rotateY : 0,
       }}
-      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      transition={{ type: "spring", stiffness: 350, damping: 28, mass: 0.5 }}
       style={{ transformStyle: "preserve-3d" }}
       className={cn(
         "relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl transition-colors duration-300 hover:border-white/20 hover:bg-white/[0.05]",
@@ -83,3 +98,4 @@ export function SpotlightCard({
     </motion.div>
   );
 }
+

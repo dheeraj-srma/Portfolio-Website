@@ -46,13 +46,19 @@ export function PhilosophySection() {
 
       {/* Interactive Philosophy Station Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-        {/* Left Side (5 cols): List of 5 Tenets evenly stretched */}
+        {/* Left Side (5 cols): List of 5 Tenets evenly stretched with stagger */}
         <div className="lg:col-span-5 flex flex-col justify-between h-full gap-3">
-          {ENGINEERING_PHILOSOPHY.map((tenet) => {
+          {ENGINEERING_PHILOSOPHY.map((tenet, idx) => {
             const isSelected = tenet.id === selectedId;
             return (
-              <button
+              <motion.button
                 key={tenet.id}
+                initial={{ opacity: 0, x: -18 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.4, delay: idx * 0.07, ease: [0.16, 1, 0.3, 1] }}
+                whileHover={{ scale: 1.015 }}
+                whileTap={{ scale: 0.99 }}
                 onClick={() => setSelectedId(tenet.id)}
                 className={`w-full text-left p-4 sm:p-5 rounded-2xl border transition-all duration-300 flex items-center justify-between group cursor-pointer ${
                   isSelected
@@ -87,23 +93,29 @@ export function PhilosophySection() {
                     isSelected ? "text-blue-400 translate-x-1" : "text-gray-600 group-hover:text-gray-400"
                   }`}
                 />
-              </button>
+              </motion.button>
             );
           })}
         </div>
 
         {/* Right Side (7 cols): Deep-Dive Exploration Card */}
-        <div className="lg:col-span-7 flex flex-col h-full">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+          className="lg:col-span-7 flex flex-col h-full"
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTenet.id}
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: 16 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.35 }}
+              exit={{ opacity: 0, x: -16 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               className="h-full"
             >
-              <SpotlightCard className="h-full p-8 sm:p-10 flex flex-col justify-between border border-white/15 bg-white/[0.02]">
+              <SpotlightCard className="h-full p-8 sm:p-10 flex flex-col justify-between border border-white/15 bg-white/[0.02] transition-shadow duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
                 <div className="space-y-6">
                   {/* Top Meta */}
                   <div className="flex items-center justify-between border-b border-white/10 pb-4">
@@ -141,7 +153,7 @@ export function PhilosophySection() {
               </SpotlightCard>
             </motion.div>
           </AnimatePresence>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
