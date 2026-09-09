@@ -11,9 +11,12 @@ export function HeroSection() {
 
   // Scroll linked animation for seamless hero avatar -> top bar transition
   const { scrollY } = useScroll();
-  const avatarOpacity = useTransform(scrollY, [0, 140], [1, 0]);
-  const avatarScale = useTransform(scrollY, [0, 140], [1, 0.55]);
-  const avatarY = useTransform(scrollY, [0, 140], [0, -40]);
+  const avatarOpacity = useTransform(scrollY, [0, 80], [1, 0]);
+  const avatarScale = useTransform(scrollY, [0, 80], [1, 0.5]);
+  const avatarY = useTransform(scrollY, [0, 80], [0, -45]);
+  const avatarWidth = useTransform(scrollY, [0, 90], [96, 0]);
+  const avatarMarginRight = useTransform(scrollY, [0, 90], [24, 0]);
+  const avatarPointerEvents = useTransform(scrollY, (v) => (v > 60 ? "none" : "auto"));
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -58,28 +61,38 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6"
+            className="flex items-center"
           >
-            {/* Round GitHub Profile Photo with Scroll Animation */}
-            <motion.a
-              href={PERSONAL_INFO.githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ opacity: avatarOpacity, scale: avatarScale, y: avatarY }}
-              className="relative group shrink-0 block cursor-pointer self-start sm:self-center"
-              title="Visit @dheeraj-srma on GitHub"
+            {/* Round GitHub Profile Photo with Scroll Animation & Collapsing Width */}
+            <motion.div
+              style={{
+                width: avatarWidth,
+                marginRight: avatarMarginRight,
+                opacity: avatarOpacity,
+                pointerEvents: avatarPointerEvents
+              }}
+              className="relative shrink-0 overflow-visible flex items-center justify-start"
             >
-              <div className="absolute -inset-1 bg-gradient-to-tr from-blue-500 via-purple-500 to-emerald-400 rounded-full blur-[4px] opacity-70 group-hover:opacity-100 transition duration-300" />
-              <img
-                src={PERSONAL_INFO.avatarUrl}
-                alt={PERSONAL_INFO.name}
-                className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover border-2 border-white/20 shadow-2xl group-hover:scale-105 transition-transform"
-              />
-              <span
-                className="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-emerald-500 border-2 border-[#090D16]"
-                title="Active"
-              />
-            </motion.a>
+              <motion.a
+                href={PERSONAL_INFO.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ scale: avatarScale, y: avatarY }}
+                className="relative group shrink-0 block cursor-pointer"
+                title="Visit @dheeraj-srma on GitHub"
+              >
+                <div className="absolute -inset-1 bg-gradient-to-tr from-blue-500 via-purple-500 to-emerald-400 rounded-full blur-[4px] opacity-70 group-hover:opacity-100 transition duration-300" />
+                <img
+                  src={PERSONAL_INFO.avatarUrl}
+                  alt={PERSONAL_INFO.name}
+                  className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover border-2 border-white/20 shadow-2xl group-hover:scale-105 transition-transform"
+                />
+                <span
+                  className="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-emerald-500 border-2 border-[#090D16]"
+                  title="Active"
+                />
+              </motion.a>
+            </motion.div>
 
             {/* Name, Handle & Roles */}
             <div className="space-y-2">
