@@ -25,6 +25,7 @@ export function Navbar() {
 
   const isManualNavRef = useRef(false);
   const manualNavTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const navTrackRef = useRef<HTMLDivElement>(null);
   const navItemRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const updatePill = useCallback((sectionId: string) => {
@@ -125,6 +126,178 @@ export function Navbar() {
     };
   }, []);
 
+  const getSectionTargetTop = useCallback((targetId: string): number => {
+    if (targetId === "hero") return 0;
+    const element = document.getElementById(targetId);
+    if (!element) return 0;
+    const contentTarget = (element.firstElementChild as HTMLElement) || element;
+    const targetTop = contentTarget.getBoundingClientRect().top + window.pageYOffset;
+    return Math.max(0, targetTop - 76);
+  }, []);
+
+  const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);
+  const hasDraggedRef = useRef(false);
+  const dragStartXRef = useRef(0);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const trackEl = navTrackRef.current;
+    if (!trackEl) return;
+
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // safe fallback
+    }
+
+    isDraggingRef.current = true;
+    hasDraggedRef.current = false;
+    dragStartXRef.current = e.clientX;
+    isManualNavRef.current = true;
+    setIsDragging(true);
+
+    if (manualNavTimerRef.current) {
+      clearTimeout(manualNavTimerRef.current);
+    }
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+
+    const deltaX = Math.abs(e.clientX - dragStartXRef.current);
+    if (deltaX > 4) {
+      hasDraggedRef.current = true;
+    }
+
+    if (!hasDraggedRef.current) return;
+
+    const trackEl = navTrackRef.current;
+    if (!trackEl) return;
+
+    const trackRect = trackEl.getBoundingClientRect();
+    const relativeX = Math.max(0, Math.min(trackRect.width, e.clientX - trackRect.left));
+
+    const sections = NAV_ITEMS.map((item) => item.href.substring(1));
+    const items = sections.map((id) => {
+      const el = navItemRefs.current[id];
+      const left = el ? el.offsetLeft : 0;
+      const width = el ? el.offsetWidth : 60;
+      return {
+        id,
+        left,
+        width,
+        center: left + width / 2
+      };
+    });
+
+    if (items.length === 0) return;
+
+    // Find closest section
+    let closestIndex = 0;
+    let minDistance = Infinity;
+    for (let i = 0; i < items.length; i++) {
+      const dist = Math.abs(relativeX - items[i].center);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestIndex = i;
+      }
+    }
+
+    const currentItem = items[closestIndex];
+    if (activeSection !== currentItem.id) {
+      setActiveSection(currentItem.id);
+    }
+
+    // Position pill centered around cursor, clamped within track
+    const firstItem = items[0];
+    const lastItem = items[items.length - 1];
+    const pillW = currentItem.width;
+    const clampedX = Math.max(
+      firstItem.left,
+      Math.min(lastItem.left + lastItem.width - pillW, relativeX - pillW / 2)
+    );
+
+    setPillStyle({
+      x: clampedX,
+      width: pillW,
+      opacity: 1
+    });
+
+    // Real-time proportional page scrub
+    let scrubScrollY = 0;
+    if (relativeX <= items[0].center) {
+      scrubScrollY = getSectionTargetTop(items[0].id);
+    } else if (relativeX >= items[items.length - 1].center) {
+      scrubScrollY = getSectionTargetTop(items[items.length - 1].id);
+    } else {
+      for (let i = 0; i < items.length - 1; i++) {
+        if (relativeX >= items[i].center && relativeX <= items[i + 1].center) {
+          const span = items[i + 1].center - items[i].center;
+          const ratio = span > 0 ? (relativeX - items[i].center) / span : 0;
+          const topA = getSectionTargetTop(items[i].id);
+          const topB = getSectionTargetTop(items[i + 1].id);
+          scrubScrollY = topA + ratio * (topB - topA);
+          break;
+        }
+      }
+    }
+
+    window.scrollTo(0, Math.max(0, scrubScrollY));
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // safe fallback
+    }
+
+    const didDrag = hasDraggedRef.current;
+    isDraggingRef.current = false;
+    setIsDragging(false);
+
+    if (didDrag) {
+      const trackEl = navTrackRef.current;
+      if (trackEl) {
+        const trackRect = trackEl.getBoundingClientRect();
+        const relativeX = Math.max(0, Math.min(trackRect.width, e.clientX - trackRect.left));
+
+        const sections = NAV_ITEMS.map((item) => item.href.substring(1));
+        let closestId = sections[0];
+        let minDistance = Infinity;
+
+        sections.forEach((id) => {
+          const el = navItemRefs.current[id];
+          if (el) {
+            const center = el.offsetLeft + el.offsetWidth / 2;
+            const dist = Math.abs(relativeX - center);
+            if (dist < minDistance) {
+              minDistance = dist;
+              closestId = id;
+            }
+          }
+        });
+
+        setActiveSection(closestId);
+        updatePill(closestId);
+
+        // Smooth scroll to the final snapped section
+        const finalTop = getSectionTargetTop(closestId);
+        window.scrollTo({
+          top: finalTop,
+          behavior: "smooth"
+        });
+      }
+    }
+
+    manualNavTimerRef.current = setTimeout(() => {
+      isManualNavRef.current = false;
+    }, 700);
+  };
+
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
     setMobileMenuOpen(false);
@@ -160,6 +333,12 @@ export function Navbar() {
         behavior: "smooth"
       });
     }
+  };
+
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    if (hasDraggedRef.current) return;
+    scrollToSection(e, href);
   };
 
   return (
@@ -227,25 +406,54 @@ export function Navbar() {
             </div>
           </a>
 
-          {/* Desktop Navigation Links with continuous ultra-smooth sliding highlight */}
-          <div className="relative hidden lg:flex items-center gap-1 bg-white/[0.03] p-1.5 rounded-full border border-white/5">
-            {/* Single Persistent Smooth Floating Highlight Pill */}
+          {/* Desktop Navigation Links with continuous ultra-smooth sliding & draggable highlight */}
+          <div
+            ref={navTrackRef}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            className={cn(
+              "relative hidden lg:flex items-center gap-1 bg-white/[0.03] p-1.5 rounded-full border border-white/5 select-none touch-none",
+              isDragging ? "cursor-grabbing" : "cursor-grab"
+            )}
+            title="Drag the highlight or click to scrub through sections"
+          >
+            {/* Single Persistent Smooth Floating Highlight Pill (Draggable Scrubber) */}
             {pillReady && (
               <motion.div
                 initial={false}
                 animate={{
                   x: pillStyle.x,
                   width: pillStyle.width,
-                  opacity: pillStyle.opacity
+                  opacity: pillStyle.opacity,
+                  scale: isDragging ? 1.04 : 1
                 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 240,
-                  damping: 25,
-                  mass: 0.7
-                }}
-                className="absolute left-0 top-1.5 bottom-1.5 bg-gradient-to-r from-blue-600/85 via-indigo-600/85 to-purple-600/85 rounded-full border border-white/25 shadow-[0_0_16px_rgba(99,102,241,0.4)] pointer-events-none z-0"
-              />
+                transition={
+                  isDragging
+                    ? { duration: 0 }
+                    : {
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 26,
+                        mass: 0.6
+                      }
+                }
+                className={cn(
+                  "absolute left-0 top-1.5 bottom-1.5 rounded-full border pointer-events-none z-0 transition-shadow duration-200",
+                  isDragging
+                    ? "bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 border-white/40 shadow-[0_0_24px_rgba(99,102,241,0.65)]"
+                    : "bg-gradient-to-r from-blue-600/85 via-indigo-600/85 to-purple-600/85 border-white/25 shadow-[0_0_16px_rgba(99,102,241,0.4)]"
+                )}
+              >
+                {/* Subtle Micro-Grip Handle Dots */}
+                <div className="absolute inset-y-0 right-2 flex items-center justify-center pointer-events-none opacity-40 group-hover:opacity-90 transition-opacity">
+                  <div className="flex gap-[2px]">
+                    <span className="w-[2px] h-2.5 rounded-full bg-white/80" />
+                    <span className="w-[2px] h-2.5 rounded-full bg-white/80" />
+                  </div>
+                </div>
+              </motion.div>
             )}
 
             {NAV_ITEMS.map((item) => {
@@ -258,9 +466,10 @@ export function Navbar() {
                     navItemRefs.current[sectionId] = el;
                   }}
                   href={item.href}
-                  onClick={(e) => scrollToSection(e, item.href)}
+                  onClick={(e) => handleLinkClick(e, item.href)}
                   className={cn(
-                    "relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-full cursor-pointer select-none transition-colors duration-200",
+                    "relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-full select-none transition-colors duration-200",
+                    isDragging ? "cursor-grabbing" : "cursor-grab",
                     isActive
                       ? "text-white font-semibold"
                       : "text-gray-400 hover:text-white"
