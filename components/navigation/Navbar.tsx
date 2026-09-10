@@ -30,6 +30,7 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [pillReady, setPillReady] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isTrackHovered, setIsTrackHovered] = useState(false);
 
   // Hardware-accelerated continuous motion values
   const pillX = useMotionValue(0);
@@ -560,7 +561,7 @@ export function Navbar() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className={cn(
-            "flex items-center justify-between gap-4 md:gap-6 rounded-full px-5 md:px-6 transition-all duration-500 ease-out border shadow-2xl backdrop-blur-xl w-full max-w-5xl",
+            "flex items-center justify-between gap-4 md:gap-6 rounded-full px-5 md:px-6 transition-all duration-500 ease-out border shadow-2xl backdrop-blur-xl w-full max-w-5xl cursor-default",
             scrolled
               ? "py-2.5 bg-[#050505]/90 border-white/15 shadow-black/40"
               : "py-3.5 bg-[#08080c]/60 border-white/10 shadow-black/20"
@@ -570,7 +571,7 @@ export function Navbar() {
           <a
             href="#hero"
             onClick={(e) => scrollToSection(e, "#hero")}
-            className="flex items-center gap-2.5 group cursor-pointer shrink-0"
+            className="flex items-center gap-2.5 group cursor-default shrink-0"
           >
             <div className="relative h-9 w-9">
               <AnimatePresence mode="wait">
@@ -619,15 +620,13 @@ export function Navbar() {
           {/* Desktop Navigation Links with continuous fluid sliding & draggable highlight */}
           <div
             ref={navTrackRef}
+            onPointerEnter={() => setIsTrackHovered(true)}
+            onPointerLeave={() => setIsTrackHovered(false)}
             onPointerDown={handleTrackPointerDown}
             onPointerMove={handleTrackPointerMove}
             onPointerUp={handleTrackPointerUp}
             onPointerCancel={handleTrackPointerUp}
-            className={cn(
-              "relative hidden lg:flex items-center gap-1 bg-white/[0.03] p-1.5 rounded-full border border-white/5 select-none touch-none",
-              isDragging ? "cursor-grabbing" : "cursor-grab"
-            )}
-            title="Drag the highlight or click to scrub through sections"
+            className="relative hidden lg:flex items-center gap-1 bg-white/[0.03] p-1.5 rounded-full border border-white/5 select-none touch-none cursor-default"
           >
             {/* Single Persistent Smooth Floating Highlight Pill (Draggable Scrubber) */}
             {pillReady && (
@@ -636,20 +635,47 @@ export function Navbar() {
                   x: pillX,
                   width: pillWidth,
                 }}
+                animate={{
+                  scale: isDragging ? 1.03 : isTrackHovered ? 1.02 : 1,
+                }}
+                transition={{
+                  scale: { type: "spring", stiffness: 400, damping: 25 },
+                }}
                 className={cn(
-                  "absolute left-0 top-1.5 bottom-1.5 rounded-full border pointer-events-none z-0 select-none will-change-transform",
+                  "absolute left-0 top-1.5 bottom-1.5 rounded-full border pointer-events-none z-0 select-none will-change-transform overflow-hidden",
                   isDragging
-                    ? "bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 border-white/40 shadow-[0_0_24px_rgba(99,102,241,0.65)] scale-[1.03] transition-[box-shadow,border-color,background-color] duration-150"
-                    : "bg-gradient-to-r from-blue-600/85 via-indigo-600/85 to-purple-600/85 border-white/25 shadow-[0_0_16px_rgba(99,102,241,0.35)] transition-[box-shadow,border-color,background-color] duration-300"
+                    ? "bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 border-white/45 shadow-[0_0_26px_rgba(99,102,241,0.7)] transition-[box-shadow,border-color,background-color] duration-150"
+                    : isTrackHovered
+                    ? "bg-gradient-to-r from-blue-500/90 via-indigo-500/90 to-purple-500/90 border-white/35 shadow-[0_0_20px_rgba(129,140,248,0.5)] transition-[box-shadow,border-color,background-color] duration-200"
+                    : "bg-gradient-to-r from-blue-600/85 via-indigo-600/85 to-purple-600/85 border-white/20 shadow-[0_0_15px_rgba(99,102,241,0.3)] transition-[box-shadow,border-color,background-color] duration-300"
                 )}
               >
-                {/* Subtle Micro-Grip Handle Accent */}
-                <div className="absolute inset-y-0 right-2 flex items-center justify-center pointer-events-none opacity-40 group-hover:opacity-90 transition-opacity">
-                  <div className="flex gap-[2px]">
-                    <span className="w-[2px] h-2.5 rounded-full bg-white/80" />
-                    <span className="w-[2px] h-2.5 rounded-full bg-white/80" />
-                  </div>
-                </div>
+                {/* Subtle radiant sheen & top specular gloss on hover or drag */}
+                <AnimatePresence>
+                  {(isTrackHovered || isDragging) && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="absolute inset-0 pointer-events-none overflow-hidden rounded-full"
+                    >
+                      {/* Sweeping diagonal light ray */}
+                      <motion.div
+                        initial={{ x: "-100%" }}
+                        animate={{ x: "200%" }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 1.8,
+                          ease: "easeInOut",
+                        }}
+                        className="absolute inset-y-0 w-2/3 -skew-x-20 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none"
+                      />
+                      {/* Top specular glossy edge */}
+                      <div className="absolute top-0 inset-x-2 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             )}
 
@@ -667,8 +693,7 @@ export function Navbar() {
                   onDragStart={(e) => e.preventDefault()}
                   onClick={(e) => handleLinkClick(e, item.href)}
                   className={cn(
-                    "relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-full select-none transition-colors duration-200 cursor-pointer",
-                    isDragging ? "cursor-grabbing" : "cursor-grab",
+                    "relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-full select-none transition-colors duration-200 cursor-default",
                     isActive
                       ? "text-white font-semibold"
                       : "text-gray-400 hover:text-white"
@@ -689,7 +714,7 @@ export function Navbar() {
               whileTap={{ scale: 0.96 }}
               href="#contact"
               onClick={(e) => scrollToSection(e, "#contact")}
-              className="relative inline-flex items-center justify-center p-0.5 overflow-hidden text-xs font-semibold rounded-full group bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg hover:shadow-blue-500/25 transition-all duration-300"
+              className="relative inline-flex items-center justify-center p-0.5 overflow-hidden text-xs font-semibold rounded-full group bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg hover:shadow-blue-500/25 transition-all duration-300 cursor-default"
             >
               <span className="px-4 py-1.5 transition-all ease-in duration-75 bg-[#0A0A0C] rounded-full group-hover:bg-transparent">
                 Connect
