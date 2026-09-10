@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, animate, type PanInfo } from "framer-motion";
 import { Terminal, User, Sparkles, FolderGit2, Mail, Menu, X, Compass, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PERSONAL_INFO } from "@/lib/data";
@@ -21,48 +21,81 @@ export function Navbar() {
   const [activeSection, setActiveSection] = useState("about");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [pillReady, setPillReady] = useState(false);
-  const [pillStyle, setPillStyle] = useState({ x: 0, width: 0, opacity: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+
+  const pillX = useMotionValue(0);
+  const pillWidth = useMotionValue(0);
 
   const isManualNavRef = useRef(false);
+  const isDraggingRef = useRef(false);
+  const hasDraggedRef = useRef(false);
+  const pointerStartXRef = useRef(0);
   const manualNavTimerRef = useRef<NodeJS.Timeout | null>(null);
   const navTrackRef = useRef<HTMLDivElement>(null);
   const navItemRefs = useRef<Record<string, HTMLElement | null>>({});
 
-  const updatePill = useCallback((sectionId: string) => {
-    const targetEl = navItemRefs.current[sectionId];
-    if (targetEl) {
-      setPillStyle({
-        x: targetEl.offsetLeft,
-        width: targetEl.offsetWidth,
-        opacity: 1
-      });
-      setPillReady(true);
-    }
+  const getSectionTargetTop = useCallback((targetId: string): number => {
+    if (targetId === "hero") return 0;
+    const element = document.getElementById(targetId);
+    if (!element) return 0;
+    const contentTarget = (element.firstElementChild as HTMLElement) || element;
+    const targetTop = contentTarget.getBoundingClientRect().top + window.pageYOffset;
+    return Math.max(0, targetTop - 76);
   }, []);
 
-  useEffect(() => {
-    updatePill(activeSection);
-  }, [activeSection, updatePill]);
+  const syncPillToSection = useCallback((sectionId: string, smooth = true) => {
+    const targetEl = navItemRefs.current[sectionId];
+    if (targetEl) {
+      const targetX = targetEl.offsetLeft;
+      const targetW = targetEl.offsetWidth;
+      if (!smooth || !pillReady) {
+        pillX.set(targetX);
+        pillWidth.set(targetW);
+        setPillReady(true);
+      } else {
+        animate(pillX, targetX, {
+          type: "spring",
+          stiffness: 240,
+          damping: 25,
+          mass: 0.7
+        });
+        animate(pillWidth, targetW, {
+          type: "spring",
+          stiffness: 240,
+          damping: 25,
+          mass: 0.7
+        });
+      }
+    }
+  }, [pillReady, pillX, pillWidth]);
 
   useEffect(() => {
-    updatePill(activeSection);
-    const raf = requestAnimationFrame(() => {
-      updatePill(activeSection);
-    });
-    const handleResize = () => updatePill(activeSection);
-    window.addEventListener("resize", handleResize);
+    if (!isDraggingRef.current) {
+      syncPillToSection(activeSection, true);
+    }
+  }, [activeSection, syncPillToSection]);
+
+  const updateBoundsAndPos = useCallback(() => {
+    if (!isDraggingRef.current) {
+      syncPillToSection(activeSection, false);
+    }
+  }, [activeSection, syncPillToSection]);
+
+  useEffect(() => {
+    updateBoundsAndPos();
+    const raf = requestAnimationFrame(updateBoundsAndPos);
+    window.addEventListener("resize", updateBoundsAndPos);
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", updateBoundsAndPos);
     };
-  }, [activeSection, updatePill]);
+  }, [updateBoundsAndPos]);
 
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
       setScrolled(scrollY > 40);
 
-      // Prevent fighting / glitched backward & forward animation during smooth navigation
       if (isManualNavRef.current) {
         if (manualNavTimerRef.current) {
           clearTimeout(manualNavTimerRef.current);
@@ -73,13 +106,11 @@ export function Navbar() {
         return;
       }
 
-      // If at the very bottom, highlight contact
       if (window.innerHeight + scrollY >= document.documentElement.scrollHeight - 50) {
         setActiveSection("contact");
         return;
       }
 
-      // If at top hero area, highlight about (first nav item)
       if (scrollY < 160) {
         setActiveSection("about");
         return;
@@ -103,7 +134,7 @@ export function Navbar() {
     };
 
     const cancelManualNav = () => {
-      if (isManualNavRef.current) {
+      if (!isDraggingRef.current && isManualNavRef.current) {
         isManualNavRef.current = false;
         if (manualNavTimerRef.current) {
           clearTimeout(manualNavTimerRef.current);
@@ -126,57 +157,12 @@ export function Navbar() {
     };
   }, []);
 
-  const getSectionTargetTop = useCallback((targetId: string): number => {
-    if (targetId === "hero") return 0;
-    const element = document.getElementById(targetId);
-    if (!element) return 0;
-    const contentTarget = (element.firstElementChild as HTMLElement) || element;
-    const targetTop = contentTarget.getBoundingClientRect().top + window.pageYOffset;
-    return Math.max(0, targetTop - 76);
-  }, []);
-
-  const [isDragging, setIsDragging] = useState(false);
-  const isDraggingRef = useRef(false);
-  const hasDraggedRef = useRef(false);
-  const dragStartXRef = useRef(0);
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return;
-    const trackEl = navTrackRef.current;
-    if (!trackEl) return;
-
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    } catch {
-      // safe fallback
-    }
-
-    isDraggingRef.current = true;
-    hasDraggedRef.current = false;
-    dragStartXRef.current = e.clientX;
-    isManualNavRef.current = true;
-    setIsDragging(true);
-
-    if (manualNavTimerRef.current) {
-      clearTimeout(manualNavTimerRef.current);
-    }
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingRef.current) return;
-
-    const deltaX = Math.abs(e.clientX - dragStartXRef.current);
-    if (deltaX > 4) {
-      hasDraggedRef.current = true;
-    }
-
-    if (!hasDraggedRef.current) return;
-
+  const scrubFromPointerX = useCallback((clientX: number) => {
     const trackEl = navTrackRef.current;
     if (!trackEl) return;
 
     const trackRect = trackEl.getBoundingClientRect();
-    const relativeX = Math.max(0, Math.min(trackRect.width, e.clientX - trackRect.left));
+    const relativeX = Math.max(0, Math.min(trackRect.width, clientX - trackRect.left));
 
     const sections = NAV_ITEMS.map((item) => item.href.substring(1));
     const items = sections.map((id) => {
@@ -193,7 +179,6 @@ export function Navbar() {
 
     if (items.length === 0) return;
 
-    // Find closest section
     let closestIndex = 0;
     let minDistance = Infinity;
     for (let i = 0; i < items.length; i++) {
@@ -209,7 +194,6 @@ export function Navbar() {
       setActiveSection(currentItem.id);
     }
 
-    // Position pill centered around cursor, clamped within track
     const firstItem = items[0];
     const lastItem = items[items.length - 1];
     const pillW = currentItem.width;
@@ -218,13 +202,9 @@ export function Navbar() {
       Math.min(lastItem.left + lastItem.width - pillW, relativeX - pillW / 2)
     );
 
-    setPillStyle({
-      x: clampedX,
-      width: pillW,
-      opacity: 1
-    });
+    pillX.set(clampedX);
+    pillWidth.set(pillW);
 
-    // Real-time proportional page scrub
     let scrubScrollY = 0;
     if (relativeX <= items[0].center) {
       scrubScrollY = getSectionTargetTop(items[0].id);
@@ -244,9 +224,94 @@ export function Navbar() {
     }
 
     window.scrollTo(0, Math.max(0, scrubScrollY));
+  }, [activeSection, getSectionTargetTop, pillWidth, pillX]);
+
+  const endScrubFromPointerX = useCallback((clientX: number) => {
+    const trackEl = navTrackRef.current;
+    if (!trackEl) return;
+
+    const trackRect = trackEl.getBoundingClientRect();
+    const relativeX = Math.max(0, Math.min(trackRect.width, clientX - trackRect.left));
+
+    const sections = NAV_ITEMS.map((item) => item.href.substring(1));
+    let closestId = sections[0];
+    let minDistance = Infinity;
+
+    sections.forEach((id) => {
+      const el = navItemRefs.current[id];
+      if (el) {
+        const center = el.offsetLeft + el.offsetWidth / 2;
+        const dist = Math.abs(relativeX - center);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestId = id;
+        }
+      }
+    });
+
+    setActiveSection(closestId);
+
+    const targetEl = navItemRefs.current[closestId];
+    if (targetEl) {
+      animate(pillX, targetEl.offsetLeft, {
+        type: "spring",
+        stiffness: 280,
+        damping: 26,
+        mass: 0.6
+      });
+      animate(pillWidth, targetEl.offsetWidth, {
+        type: "spring",
+        stiffness: 280,
+        damping: 26,
+        mass: 0.6
+      });
+    }
+
+    const finalTop = getSectionTargetTop(closestId);
+    window.scrollTo({
+      top: finalTop,
+      behavior: "smooth"
+    });
+
+    manualNavTimerRef.current = setTimeout(() => {
+      isManualNavRef.current = false;
+    }, 700);
+  }, [getSectionTargetTop, pillWidth, pillX]);
+
+  const handleTrackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // safe fallback
+    }
+
+    isDraggingRef.current = true;
+    hasDraggedRef.current = false;
+    pointerStartXRef.current = e.clientX;
+    isManualNavRef.current = true;
+
+    if (manualNavTimerRef.current) {
+      clearTimeout(manualNavTimerRef.current);
+    }
   };
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handleTrackPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+
+    const deltaX = Math.abs(e.clientX - pointerStartXRef.current);
+    if (deltaX > 4) {
+      hasDraggedRef.current = true;
+      setIsDragging(true);
+    }
+
+    if (hasDraggedRef.current) {
+      scrubFromPointerX(e.clientX);
+    }
+  };
+
+  const handleTrackPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDraggingRef.current) return;
 
     try {
@@ -260,42 +325,12 @@ export function Navbar() {
     setIsDragging(false);
 
     if (didDrag) {
-      const trackEl = navTrackRef.current;
-      if (trackEl) {
-        const trackRect = trackEl.getBoundingClientRect();
-        const relativeX = Math.max(0, Math.min(trackRect.width, e.clientX - trackRect.left));
-
-        const sections = NAV_ITEMS.map((item) => item.href.substring(1));
-        let closestId = sections[0];
-        let minDistance = Infinity;
-
-        sections.forEach((id) => {
-          const el = navItemRefs.current[id];
-          if (el) {
-            const center = el.offsetLeft + el.offsetWidth / 2;
-            const dist = Math.abs(relativeX - center);
-            if (dist < minDistance) {
-              minDistance = dist;
-              closestId = id;
-            }
-          }
-        });
-
-        setActiveSection(closestId);
-        updatePill(closestId);
-
-        // Smooth scroll to the final snapped section
-        const finalTop = getSectionTargetTop(closestId);
-        window.scrollTo({
-          top: finalTop,
-          behavior: "smooth"
-        });
-      }
+      endScrubFromPointerX(e.clientX);
+    } else {
+      manualNavTimerRef.current = setTimeout(() => {
+        isManualNavRef.current = false;
+      }, 500);
     }
-
-    manualNavTimerRef.current = setTimeout(() => {
-      isManualNavRef.current = false;
-    }, 700);
   };
 
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -323,11 +358,8 @@ export function Navbar() {
         return;
       }
 
-      // Target the section's actual header/content directly to eliminate the top margin
       const contentTarget = (element.firstElementChild as HTMLElement) || element;
       const targetTop = contentTarget.getBoundingClientRect().top + window.pageYOffset;
-      // Fixed floating navbar occupies ~68px from top.
-      // Offset 76px positions the module header right below the floating navbar with zero dead space/margin.
       window.scrollTo({
         top: Math.max(0, targetTop - 76),
         behavior: "smooth"
@@ -409,10 +441,10 @@ export function Navbar() {
           {/* Desktop Navigation Links with continuous ultra-smooth sliding & draggable highlight */}
           <div
             ref={navTrackRef}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
+            onPointerDown={handleTrackPointerDown}
+            onPointerMove={handleTrackPointerMove}
+            onPointerUp={handleTrackPointerUp}
+            onPointerCancel={handleTrackPointerUp}
             className={cn(
               "relative hidden lg:flex items-center gap-1 bg-white/[0.03] p-1.5 rounded-full border border-white/5 select-none touch-none",
               isDragging ? "cursor-grabbing" : "cursor-grab"
@@ -422,27 +454,14 @@ export function Navbar() {
             {/* Single Persistent Smooth Floating Highlight Pill (Draggable Scrubber) */}
             {pillReady && (
               <motion.div
-                initial={false}
-                animate={{
-                  x: pillStyle.x,
-                  width: pillStyle.width,
-                  opacity: pillStyle.opacity,
-                  scale: isDragging ? 1.04 : 1
+                style={{
+                  x: pillX,
+                  width: pillWidth
                 }}
-                transition={
-                  isDragging
-                    ? { duration: 0 }
-                    : {
-                        type: "spring",
-                        stiffness: 260,
-                        damping: 26,
-                        mass: 0.6
-                      }
-                }
                 className={cn(
-                  "absolute left-0 top-1.5 bottom-1.5 rounded-full border pointer-events-none z-0 transition-shadow duration-200",
+                  "absolute left-0 top-1.5 bottom-1.5 rounded-full border pointer-events-none z-0 select-none transition-all duration-200",
                   isDragging
-                    ? "bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 border-white/40 shadow-[0_0_24px_rgba(99,102,241,0.65)]"
+                    ? "bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 border-white/40 shadow-[0_0_24px_rgba(99,102,241,0.7)] scale-[1.04]"
                     : "bg-gradient-to-r from-blue-600/85 via-indigo-600/85 to-purple-600/85 border-white/25 shadow-[0_0_16px_rgba(99,102,241,0.4)]"
                 )}
               >
@@ -466,16 +485,18 @@ export function Navbar() {
                     navItemRefs.current[sectionId] = el;
                   }}
                   href={item.href}
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
                   onClick={(e) => handleLinkClick(e, item.href)}
                   className={cn(
-                    "relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-full select-none transition-colors duration-200",
+                    "relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-full select-none transition-colors duration-200 cursor-pointer",
                     isDragging ? "cursor-grabbing" : "cursor-grab",
                     isActive
                       ? "text-white font-semibold"
                       : "text-gray-400 hover:text-white"
                   )}
                 >
-                  <span className="relative z-10 block transition-transform duration-150 active:scale-95">
+                  <span className="relative z-10 block transition-transform duration-150 active:scale-95 pointer-events-none">
                     {item.name}
                   </span>
                 </a>
