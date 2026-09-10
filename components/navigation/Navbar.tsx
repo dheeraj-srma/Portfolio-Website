@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Terminal, User, Sparkles, FolderGit2, Mail, Menu, X, Compass, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,8 +20,41 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("about");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [pillReady, setPillReady] = useState(false);
+  const [pillStyle, setPillStyle] = useState({ x: 0, width: 0, opacity: 0 });
+
   const isManualNavRef = useRef(false);
   const manualNavTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const navItemRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  const updatePill = useCallback((sectionId: string) => {
+    const targetEl = navItemRefs.current[sectionId];
+    if (targetEl) {
+      setPillStyle({
+        x: targetEl.offsetLeft,
+        width: targetEl.offsetWidth,
+        opacity: 1
+      });
+      setPillReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    updatePill(activeSection);
+  }, [activeSection, updatePill]);
+
+  useEffect(() => {
+    updatePill(activeSection);
+    const raf = requestAnimationFrame(() => {
+      updatePill(activeSection);
+    });
+    const handleResize = () => updatePill(activeSection);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [activeSection, updatePill]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -52,7 +85,7 @@ export function Navbar() {
       }
 
       const sections = NAV_ITEMS.map((item) => item.href.substring(1));
-      const scrollPosition = scrollY + 120;
+      const scrollPosition = scrollY + Math.min(window.innerHeight * 0.35, 240);
 
       for (let i = sections.length - 1; i >= 0; i--) {
         const el = document.getElementById(sections[i]);
@@ -194,34 +227,45 @@ export function Navbar() {
             </div>
           </a>
 
-          {/* Desktop Navigation Links with ultra-smooth gliding highlight */}
-          <div className="hidden lg:flex items-center gap-1 bg-white/[0.03] p-1.5 rounded-full border border-white/5">
+          {/* Desktop Navigation Links with continuous ultra-smooth sliding highlight */}
+          <div className="relative hidden lg:flex items-center gap-1 bg-white/[0.03] p-1.5 rounded-full border border-white/5">
+            {/* Single Persistent Smooth Floating Highlight Pill */}
+            {pillReady && (
+              <motion.div
+                initial={false}
+                animate={{
+                  x: pillStyle.x,
+                  width: pillStyle.width,
+                  opacity: pillStyle.opacity
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 240,
+                  damping: 25,
+                  mass: 0.7
+                }}
+                className="absolute left-0 top-1.5 bottom-1.5 bg-gradient-to-r from-blue-600/85 via-indigo-600/85 to-purple-600/85 rounded-full border border-white/25 shadow-[0_0_16px_rgba(99,102,241,0.4)] pointer-events-none z-0"
+              />
+            )}
+
             {NAV_ITEMS.map((item) => {
-              const isActive = activeSection === item.href.substring(1);
+              const sectionId = item.href.substring(1);
+              const isActive = activeSection === sectionId;
               return (
                 <a
                   key={item.name}
+                  ref={(el) => {
+                    navItemRefs.current[sectionId] = el;
+                  }}
                   href={item.href}
                   onClick={(e) => scrollToSection(e, item.href)}
                   className={cn(
-                    "relative px-3.5 py-1.5 text-xs font-medium rounded-full cursor-pointer select-none transition-colors duration-200",
+                    "relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-full cursor-pointer select-none transition-colors duration-200",
                     isActive
                       ? "text-white font-semibold"
-                      : "text-gray-400 hover:text-white hover:bg-white/[0.04]"
+                      : "text-gray-400 hover:text-white"
                   )}
                 >
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeNavbarTab"
-                      className="absolute inset-0 bg-gradient-to-r from-blue-600/85 via-indigo-600/85 to-purple-600/85 rounded-full border border-white/25 shadow-[0_0_16px_rgba(99,102,241,0.4)] pointer-events-none"
-                      transition={{
-                        type: "spring",
-                        stiffness: 340,
-                        damping: 30,
-                        mass: 0.6
-                      }}
-                    />
-                  )}
                   <span className="relative z-10 block transition-transform duration-150 active:scale-95">
                     {item.name}
                   </span>
