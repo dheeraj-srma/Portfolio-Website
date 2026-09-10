@@ -41,13 +41,18 @@ export function Navbar() {
   const scrollTargetWRef = useRef(0);
   const activeSectionRef = useRef("about");
 
-  // Interaction mode flags
-  const isManualNavRef = useRef(false);
+  // Navigation lock refs to eliminate reverse transition glitches
+  const isNavigatingRef = useRef(false);
+  const navigatingTargetScrollRef = useRef(0);
+  const scrollEndTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const activeAnimationXRef = useRef<{ stop: () => void } | null>(null);
+  const activeAnimationWRef = useRef<{ stop: () => void } | null>(null);
+
+  // Drag interaction flags
   const isDraggingRef = useRef(false);
   const hasDraggedRef = useRef(false);
   const dragStartXRef = useRef(0);
   const dragCurrentXRef = useRef(0);
-  const manualNavTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // DOM element references
   const navTrackRef = useRef<HTMLDivElement>(null);
@@ -103,40 +108,85 @@ export function Navbar() {
     navMetricsRef.current = metrics;
   }, []);
 
-  // Sync pill to active section immediately or with spring
-  const syncPillToSection = useCallback((sectionId: string, smooth = true) => {
-    const metric = navMetricsRef.current.find((m) => m.id === sectionId);
-    if (!metric) return;
+  // Programmatic navigation: single authoritative motion driver
+  const navigatePillToTab = useCallback(
+    (targetId: string, smoothScroll = true) => {
+      const metric = navMetricsRef.current.find((m) => m.id === targetId);
+      if (!metric) return;
 
-    scrollTargetXRef.current = metric.tabLeft;
-    scrollTargetWRef.current = metric.tabWidth;
+      // Stop any existing spring animations immediately
+      if (activeAnimationXRef.current) activeAnimationXRef.current.stop();
+      if (activeAnimationWRef.current) activeAnimationWRef.current.stop();
 
-    if (!smooth || !pillReady) {
-      pillX.set(metric.tabLeft);
-      pillWidth.set(metric.tabWidth);
-      setPillReady(true);
-    } else {
-      animate(pillX, metric.tabLeft, {
-        type: "spring",
-        stiffness: 320,
-        damping: 30,
-        mass: 0.5,
-      });
-      animate(pillWidth, metric.tabWidth, {
-        type: "spring",
-        stiffness: 320,
-        damping: 30,
-        mass: 0.5,
-      });
-    }
-  }, [pillReady, pillX, pillWidth]);
+      // Lock scroll listeners so intermediate scrollY values never pull the pill backwards
+      isNavigatingRef.current = true;
+      navigatingTargetScrollRef.current = metric.targetScrollTop;
+      activeSectionRef.current = targetId;
+      setActiveSection(targetId);
+
+      scrollTargetXRef.current = metric.tabLeft;
+      scrollTargetWRef.current = metric.tabWidth;
+
+      if (!pillReady) {
+        pillX.set(metric.tabLeft);
+        pillWidth.set(metric.tabWidth);
+        setPillReady(true);
+      } else {
+        // Direct forward spring to target tab
+        activeAnimationXRef.current = animate(pillX, metric.tabLeft, {
+          type: "spring",
+          stiffness: 300,
+          damping: 28,
+          mass: 0.5,
+          onComplete: () => {
+            activeAnimationXRef.current = null;
+          },
+        });
+
+        activeAnimationWRef.current = animate(pillWidth, metric.tabWidth, {
+          type: "spring",
+          stiffness: 300,
+          damping: 28,
+          mass: 0.5,
+          onComplete: () => {
+            activeAnimationWRef.current = null;
+          },
+        });
+      }
+
+      if (smoothScroll) {
+        window.scrollTo({
+          top: metric.targetScrollTop,
+          behavior: "smooth",
+        });
+
+        // Set safety timeout to release navigation lock if scroll completes
+        if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
+        scrollEndTimerRef.current = setTimeout(() => {
+          isNavigatingRef.current = false;
+        }, 800);
+      } else {
+        isNavigatingRef.current = false;
+      }
+    },
+    [pillReady, pillX, pillWidth]
+  );
 
   // Initial mount & resize measurements
   useEffect(() => {
     const updateMetricsAndPosition = () => {
       measureMetrics();
-      if (!isDraggingRef.current && !isManualNavRef.current) {
-        syncPillToSection(activeSectionRef.current, false);
+      if (!isDraggingRef.current && !isNavigatingRef.current) {
+        const metric = navMetricsRef.current.find((m) => m.id === activeSectionRef.current);
+        if (metric) {
+          scrollTargetXRef.current = metric.tabLeft;
+          scrollTargetWRef.current = metric.tabWidth;
+          if (!pillReady) {
+            pillX.set(metric.tabLeft);
+            pillWidth.set(metric.tabWidth);
+            setPillReady(true);
+          }
+        }
       }
     };
 
@@ -154,19 +204,19 @@ export function Navbar() {
       clearTimeout(timer);
       window.removeEventListener("resize", updateMetricsAndPosition);
     };
-  }, [measureMetrics, syncPillToSection]);
+  }, [measureMetrics, pillReady, pillX, pillWidth]);
 
-  // Persistent continuous RAF lerp loop for pill movement during page scrolling
+  // Persistent continuous RAF lerp loop for pill movement during manual page scrolling
   useEffect(() => {
     const tickPill = () => {
-      // Only interpolate via RAF when not actively dragging
-      if (!isDraggingRef.current) {
+      // Never interpolate in RAF if dragging, programmatically navigating, or running an animate() spring
+      if (!isDraggingRef.current && !isNavigatingRef.current && !activeAnimationXRef.current) {
         const curX = pillX.get();
         const curW = pillWidth.get();
         const diffX = scrollTargetXRef.current - curX;
         const diffW = scrollTargetWRef.current - curW;
 
-        if (Math.abs(diffX) > 0.1 || Math.abs(diffW) > 0.1) {
+        if (Math.abs(diffX) > 0.08 || Math.abs(diffW) > 0.08) {
           pillX.set(curX + diffX * 0.28);
           pillWidth.set(curW + diffW * 0.28);
         }
@@ -188,9 +238,21 @@ export function Navbar() {
       const scrollY = window.scrollY;
       setScrolled(scrollY > 40);
 
-      // If user is clicking a tab or dragging the scrubber, do not interfere
-      if (isManualNavRef.current || isDraggingRef.current) {
-        return;
+      // Lock during dragging
+      if (isDraggingRef.current) return;
+
+      // Lock during programmatic smooth navigation
+      if (isNavigatingRef.current) {
+        if (Math.abs(scrollY - navigatingTargetScrollRef.current) <= 3) {
+          isNavigatingRef.current = false;
+        } else {
+          // Reset debounce timer on every scroll frame while programmatic scroll is in motion
+          if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
+          scrollEndTimerRef.current = setTimeout(() => {
+            isNavigatingRef.current = false;
+          }, 120);
+          return;
+        }
       }
 
       const metrics = navMetricsRef.current;
@@ -246,27 +308,29 @@ export function Navbar() {
       }
     };
 
-    // User manual interaction overrides programmatic scroll locks
-    const releaseManualNav = () => {
-      if (!isDraggingRef.current && isManualNavRef.current) {
-        isManualNavRef.current = false;
-        if (manualNavTimerRef.current) {
-          clearTimeout(manualNavTimerRef.current);
+    // User intentional wheel or touch unlocks navigation immediately
+    const handleUserScrollInterrupt = () => {
+      if (isNavigatingRef.current) {
+        isNavigatingRef.current = false;
+        if (scrollEndTimerRef.current) {
+          clearTimeout(scrollEndTimerRef.current);
         }
+        if (activeAnimationXRef.current) activeAnimationXRef.current.stop();
+        if (activeAnimationWRef.current) activeAnimationWRef.current.stop();
       }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("wheel", releaseManualNav, { passive: true });
-    window.addEventListener("touchmove", releaseManualNav, { passive: true });
+    window.addEventListener("wheel", handleUserScrollInterrupt, { passive: true });
+    window.addEventListener("touchmove", handleUserScrollInterrupt, { passive: true });
     handleScroll();
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("wheel", releaseManualNav);
-      window.removeEventListener("touchmove", releaseManualNav);
-      if (manualNavTimerRef.current) {
-        clearTimeout(manualNavTimerRef.current);
+      window.removeEventListener("wheel", handleUserScrollInterrupt);
+      window.removeEventListener("touchmove", handleUserScrollInterrupt);
+      if (scrollEndTimerRef.current) {
+        clearTimeout(scrollEndTimerRef.current);
       }
     };
   }, []);
@@ -371,11 +435,10 @@ export function Navbar() {
     hasDraggedRef.current = false;
     dragStartXRef.current = e.clientX;
     dragCurrentXRef.current = e.clientX;
-    isManualNavRef.current = true;
     targetScrollYRef.current = window.scrollY;
 
-    if (manualNavTimerRef.current) {
-      clearTimeout(manualNavTimerRef.current);
+    if (scrollEndTimerRef.current) {
+      clearTimeout(scrollEndTimerRef.current);
     }
   };
 
@@ -422,68 +485,12 @@ export function Navbar() {
     });
 
     if (didDrag) {
-      activeSectionRef.current = closestItem.id;
-      setActiveSection(closestItem.id);
-      scrollTargetXRef.current = closestItem.tabLeft;
-      scrollTargetWRef.current = closestItem.tabWidth;
-
-      // Spring snap to docked section tab
-      animate(pillX, closestItem.tabLeft, {
-        type: "spring",
-        stiffness: 350,
-        damping: 30,
-        mass: 0.5,
-      });
-      animate(pillWidth, closestItem.tabWidth, {
-        type: "spring",
-        stiffness: 350,
-        damping: 30,
-        mass: 0.5,
-      });
-
-      // Smooth scroll viewport to landing position with zero top margin
-      window.scrollTo({
-        top: closestItem.targetScrollTop,
-        behavior: "smooth",
-      });
-
-      manualNavTimerRef.current = setTimeout(() => {
-        isManualNavRef.current = false;
-      }, 700);
+      navigatePillToTab(closestItem.id, true);
     } else {
       // User tapped/clicked on track background rather than on link text
       const isAnchorClick = (e.target as HTMLElement)?.closest("a");
       if (!isAnchorClick && closestItem) {
-        activeSectionRef.current = closestItem.id;
-        setActiveSection(closestItem.id);
-        scrollTargetXRef.current = closestItem.tabLeft;
-        scrollTargetWRef.current = closestItem.tabWidth;
-
-        animate(pillX, closestItem.tabLeft, {
-          type: "spring",
-          stiffness: 320,
-          damping: 28,
-          mass: 0.5,
-        });
-        animate(pillWidth, closestItem.tabWidth, {
-          type: "spring",
-          stiffness: 320,
-          damping: 28,
-          mass: 0.5,
-        });
-
-        window.scrollTo({
-          top: closestItem.targetScrollTop,
-          behavior: "smooth",
-        });
-
-        manualNavTimerRef.current = setTimeout(() => {
-          isManualNavRef.current = false;
-        }, 700);
-      } else {
-        manualNavTimerRef.current = setTimeout(() => {
-          isManualNavRef.current = false;
-        }, 500);
+        navigatePillToTab(closestItem.id, true);
       }
     }
   };
@@ -494,56 +501,13 @@ export function Navbar() {
     setMobileMenuOpen(false);
     const targetId = href.replace("#", "");
 
-    activeSectionRef.current = targetId;
-    setActiveSection(targetId);
-    isManualNavRef.current = true;
-
-    if (manualNavTimerRef.current) {
-      clearTimeout(manualNavTimerRef.current);
-    }
-    manualNavTimerRef.current = setTimeout(() => {
-      isManualNavRef.current = false;
-    }, 900);
-
-    const metric = navMetricsRef.current.find((m) => m.id === targetId);
-    if (metric) {
-      scrollTargetXRef.current = metric.tabLeft;
-      scrollTargetWRef.current = metric.tabWidth;
-
-      animate(pillX, metric.tabLeft, {
-        type: "spring",
-        stiffness: 320,
-        damping: 28,
-        mass: 0.5,
-      });
-      animate(pillWidth, metric.tabWidth, {
-        type: "spring",
-        stiffness: 320,
-        damping: 28,
-        mass: 0.5,
-      });
-
-      window.scrollTo({
-        top: metric.targetScrollTop,
-        behavior: "smooth",
-      });
+    if (targetId === "hero") {
+      navigatePillToTab("about", false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
-    // Fallback if metric not found yet
-    const element = document.getElementById(targetId);
-    if (element) {
-      if (targetId === "hero") {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        return;
-      }
-      const contentTarget = (element.firstElementChild as HTMLElement) || element;
-      const targetTop = contentTarget.getBoundingClientRect().top + window.pageYOffset;
-      window.scrollTo({
-        top: Math.max(0, targetTop - 76),
-        behavior: "smooth",
-      });
-    }
+    navigatePillToTab(targetId, true);
   };
 
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -635,47 +599,52 @@ export function Navbar() {
                   x: pillX,
                   width: pillWidth,
                 }}
-                animate={{
-                  scale: isDragging ? 1.03 : isTrackHovered ? 1.02 : 1,
-                }}
-                transition={{
-                  scale: { type: "spring", stiffness: 400, damping: 25 },
-                }}
-                className={cn(
-                  "absolute left-0 top-1.5 bottom-1.5 rounded-full border pointer-events-none z-0 select-none will-change-transform overflow-hidden",
-                  isDragging
-                    ? "bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 border-white/45 shadow-[0_0_26px_rgba(99,102,241,0.7)] transition-[box-shadow,border-color,background-color] duration-150"
-                    : isTrackHovered
-                    ? "bg-gradient-to-r from-blue-500/90 via-indigo-500/90 to-purple-500/90 border-white/35 shadow-[0_0_20px_rgba(129,140,248,0.5)] transition-[box-shadow,border-color,background-color] duration-200"
-                    : "bg-gradient-to-r from-blue-600/85 via-indigo-600/85 to-purple-600/85 border-white/20 shadow-[0_0_15px_rgba(99,102,241,0.3)] transition-[box-shadow,border-color,background-color] duration-300"
-                )}
+                className="absolute left-0 top-1.5 bottom-1.5 pointer-events-none z-0 select-none will-change-transform"
               >
-                {/* Subtle radiant sheen & top specular gloss on hover or drag */}
-                <AnimatePresence>
-                  {(isTrackHovered || isDragging) && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="absolute inset-0 pointer-events-none overflow-hidden rounded-full"
-                    >
-                      {/* Sweeping diagonal light ray */}
-                      <motion.div
-                        initial={{ x: "-100%" }}
-                        animate={{ x: "200%" }}
-                        transition={{
-                          repeat: Infinity,
-                          duration: 1.8,
-                          ease: "easeInOut",
-                        }}
-                        className="absolute inset-y-0 w-2/3 -skew-x-20 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none"
-                      />
-                      {/* Top specular glossy edge */}
-                      <div className="absolute top-0 inset-x-2 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
-                    </motion.div>
+                {/* Isolated Inner Pill: Handles scale, glow, border, and shimmer without interfering with X-translation */}
+                <motion.div
+                  animate={{
+                    scale: isDragging ? 1.03 : isTrackHovered ? 1.02 : 1,
+                  }}
+                  transition={{
+                    scale: { type: "spring", stiffness: 400, damping: 25 },
+                  }}
+                  className={cn(
+                    "relative w-full h-full rounded-full border overflow-hidden",
+                    isDragging
+                      ? "bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 border-white/45 shadow-[0_0_26px_rgba(99,102,241,0.7)] transition-[box-shadow,border-color,background-color] duration-150"
+                      : isTrackHovered
+                      ? "bg-gradient-to-r from-blue-500/90 via-indigo-500/90 to-purple-500/90 border-white/35 shadow-[0_0_20px_rgba(129,140,248,0.5)] transition-[box-shadow,border-color,background-color] duration-200"
+                      : "bg-gradient-to-r from-blue-600/85 via-indigo-600/85 to-purple-600/85 border-white/20 shadow-[0_0_15px_rgba(99,102,241,0.3)] transition-[box-shadow,border-color,background-color] duration-300"
                   )}
-                </AnimatePresence>
+                >
+                  {/* Radiant sheen & top specular gloss on hover or drag */}
+                  <AnimatePresence>
+                    {(isTrackHovered || isDragging) && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="absolute inset-0 pointer-events-none overflow-hidden rounded-full"
+                      >
+                        {/* Sweeping diagonal light ray */}
+                        <motion.div
+                          initial={{ x: "-100%" }}
+                          animate={{ x: "200%" }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 1.8,
+                            ease: "easeInOut",
+                          }}
+                          className="absolute inset-y-0 w-2/3 -skew-x-20 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none"
+                        />
+                        {/* Top specular glossy edge */}
+                        <div className="absolute top-0 inset-x-2 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               </motion.div>
             )}
 
