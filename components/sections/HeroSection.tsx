@@ -66,7 +66,14 @@ export function HeroSection() {
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+    if (el) {
+      const contentTarget = (el.firstElementChild as HTMLElement) || el;
+      const targetTop = contentTarget.getBoundingClientRect().top + window.pageYOffset;
+      window.scrollTo({
+        top: Math.max(0, targetTop - 76),
+        behavior: "smooth"
+      });
+    }
   };
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Terminal, User, Sparkles, FolderGit2, Mail, Menu, X, Compass, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,47 +20,110 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("about");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isManualNavRef = useRef(false);
+  const manualNavTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
       setScrolled(scrollY > 40);
 
-      // Active section detection with balanced midpoint offset
-      const sections = NAV_ITEMS.map((item) => item.href.substring(1));
-      const scrollPosition = scrollY + 240;
+      // Prevent fighting / glitched backward & forward animation during smooth navigation
+      if (isManualNavRef.current) {
+        if (manualNavTimerRef.current) {
+          clearTimeout(manualNavTimerRef.current);
+        }
+        manualNavTimerRef.current = setTimeout(() => {
+          isManualNavRef.current = false;
+        }, 120);
+        return;
+      }
 
-      if (scrollY < 140) {
+      // If at the very bottom, highlight contact
+      if (window.innerHeight + scrollY >= document.documentElement.scrollHeight - 50) {
+        setActiveSection("contact");
+        return;
+      }
+
+      // If at top hero area, highlight about (first nav item)
+      if (scrollY < 160) {
         setActiveSection("about");
         return;
       }
 
+      const sections = NAV_ITEMS.map((item) => item.href.substring(1));
+      const scrollPosition = scrollY + 120;
+
       for (let i = sections.length - 1; i >= 0; i--) {
         const el = document.getElementById(sections[i]);
-        if (el && el.offsetTop <= scrollPosition) {
-          setActiveSection(sections[i]);
-          return;
+        if (el) {
+          const contentTarget = (el.firstElementChild as HTMLElement) || el;
+          const targetTop = contentTarget.getBoundingClientRect().top + scrollY;
+          if (scrollPosition >= targetTop) {
+            setActiveSection(sections[i]);
+            return;
+          }
         }
       }
       setActiveSection("about");
     };
 
+    const cancelManualNav = () => {
+      if (isManualNavRef.current) {
+        isManualNavRef.current = false;
+        if (manualNavTimerRef.current) {
+          clearTimeout(manualNavTimerRef.current);
+        }
+      }
+    };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("wheel", cancelManualNav, { passive: true });
+    window.addEventListener("touchmove", cancelManualNav, { passive: true });
     handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("wheel", cancelManualNav);
+      window.removeEventListener("touchmove", cancelManualNav);
+      if (manualNavTimerRef.current) {
+        clearTimeout(manualNavTimerRef.current);
+      }
+    };
   }, []);
 
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
     setMobileMenuOpen(false);
     const targetId = href.replace("#", "");
+
     setActiveSection(targetId);
+    isManualNavRef.current = true;
+
+    if (manualNavTimerRef.current) {
+      clearTimeout(manualNavTimerRef.current);
+    }
+    manualNavTimerRef.current = setTimeout(() => {
+      isManualNavRef.current = false;
+    }, 1000);
+
     const element = document.getElementById(targetId);
     if (element) {
-      const navOffset = 85;
-      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      if (targetId === "hero") {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+        return;
+      }
+
+      // Target the section's actual header/content directly to eliminate the top margin
+      const contentTarget = (element.firstElementChild as HTMLElement) || element;
+      const targetTop = contentTarget.getBoundingClientRect().top + window.pageYOffset;
+      // Fixed floating navbar occupies ~68px from top.
+      // Offset 76px positions the module header right below the floating navbar with zero dead space/margin.
       window.scrollTo({
-        top: Math.max(0, elementPosition - navOffset),
+        top: Math.max(0, targetTop - 76),
         behavior: "smooth"
       });
     }
@@ -131,38 +194,38 @@ export function Navbar() {
             </div>
           </a>
 
-          {/* Desktop Navigation Links with subtle hover micro-interactions */}
+          {/* Desktop Navigation Links with ultra-smooth gliding highlight */}
           <div className="hidden lg:flex items-center gap-1 bg-white/[0.03] p-1.5 rounded-full border border-white/5">
             {NAV_ITEMS.map((item) => {
               const isActive = activeSection === item.href.substring(1);
               return (
-                <motion.a
+                <a
                   key={item.name}
                   href={item.href}
                   onClick={(e) => scrollToSection(e, item.href)}
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.97 }}
                   className={cn(
                     "relative px-3.5 py-1.5 text-xs font-medium rounded-full cursor-pointer select-none transition-colors duration-200",
                     isActive
                       ? "text-white font-semibold"
-                      : "text-gray-400 hover:text-gray-100"
+                      : "text-gray-400 hover:text-white hover:bg-white/[0.04]"
                   )}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="activeNavbarTab"
-                      className="absolute inset-0 bg-gradient-to-r from-blue-600/80 via-indigo-600/80 to-purple-600/80 rounded-full border border-white/25 shadow-[0_0_15px_rgba(99,102,241,0.35)]"
+                      className="absolute inset-0 bg-gradient-to-r from-blue-600/85 via-indigo-600/85 to-purple-600/85 rounded-full border border-white/25 shadow-[0_0_16px_rgba(99,102,241,0.4)] pointer-events-none"
                       transition={{
                         type: "spring",
-                        stiffness: 380,
-                        damping: 32,
-                        mass: 0.8
+                        stiffness: 340,
+                        damping: 30,
+                        mass: 0.6
                       }}
                     />
                   )}
-                  <span className="relative z-10">{item.name}</span>
-                </motion.a>
+                  <span className="relative z-10 block transition-transform duration-150 active:scale-95">
+                    {item.name}
+                  </span>
+                </a>
               );
             })}
           </div>

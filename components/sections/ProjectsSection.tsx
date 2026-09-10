@@ -36,7 +36,7 @@ export function ProjectsSection() {
       : PROJECTS.filter((p) => p.category === activeFilter);
 
   return (
-    <section id="projects" className="py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10">
+    <section id="projects" className="py-20 sm:py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10 scroll-mt-20">
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
         <motion.div

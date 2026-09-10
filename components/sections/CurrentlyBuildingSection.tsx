@@ -121,7 +121,7 @@ function DonutProgress({ progress, gradientId, delay = 0 }: DonutProgressProps) 
 
 export function CurrentlyBuildingSection() {
   return (
-    <section id="currently-building" className="py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10">
+    <section id="currently-building" className="py-20 sm:py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10 scroll-mt-20">
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
         <motion.div

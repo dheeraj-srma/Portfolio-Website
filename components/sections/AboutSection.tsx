@@ -7,7 +7,7 @@ import { SpotlightCard } from "@/components/common/SpotlightCard";
 
 export function AboutSection() {
   return (
-    <section id="about" className="py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10">
+    <section id="about" className="py-20 sm:py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10 scroll-mt-20">
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
         <motion.div
