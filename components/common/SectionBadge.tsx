@@ -1,15 +1,28 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, TargetAndTransition, Transition } from "framer-motion";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+
+export type IconAnimationType =
+  | "twinkle"
+  | "compass"
+  | "flicker"
+  | "float"
+  | "jitter"
+  | "heartbeat"
+  | "sway"
+  | "chime"
+  | "brackets"
+  | "pulse";
 
 export interface SectionBadgeProps {
   icon: React.ReactNode;
   text: string;
   className?: string;
   color?: "blue" | "purple" | "emerald" | "amber" | "pink";
-  delay?: number; // delay in ms before animation begins
+  animationType?: IconAnimationType;
+  delay?: number; // delay in ms before entrance animation starts
 }
 
 const COLOR_CLASSES: Record<string, string> = {
@@ -20,126 +33,306 @@ const COLOR_CLASSES: Record<string, string> = {
   pink: "border-pink-500/30 bg-pink-500/10 text-pink-300",
 };
 
+// Signature looping animations tailored for each specific icon type
+const ICON_ANIMATIONS: Record<
+  IconAnimationType,
+  {
+    animate: TargetAndTransition;
+    transition: Transition;
+  }
+> = {
+  // Sparkles: Stellar twinkle, rotation shimmer & bright starburst pulses
+  twinkle: {
+    animate: {
+      scale: [1, 1.28, 0.94, 1.22, 1],
+      rotate: [0, 16, -14, 8, 0],
+      filter: [
+        "brightness(1) drop-shadow(0 0 0px transparent)",
+        "brightness(1.7) drop-shadow(0 0 8px currentColor)",
+        "brightness(1.2) drop-shadow(0 0 2px currentColor)",
+        "brightness(1.8) drop-shadow(0 0 9px currentColor)",
+        "brightness(1) drop-shadow(0 0 0px transparent)",
+      ],
+    },
+    transition: {
+      duration: 2.4,
+      repeat: Infinity,
+      ease: "easeInOut",
+      repeatDelay: 0.6,
+    },
+  },
+
+  // Compass: Navigational needle sweep, magnetic seeking oscillation
+  compass: {
+    animate: {
+      rotate: [0, -36, 42, -18, 16, 0],
+      scale: [1, 1.16, 0.97, 1.12, 1],
+      filter: [
+        "drop-shadow(0 0 0px transparent)",
+        "drop-shadow(0 0 7px currentColor)",
+        "drop-shadow(0 0 2px currentColor)",
+        "drop-shadow(0 0 0px transparent)",
+      ],
+    },
+    transition: {
+      duration: 2.8,
+      repeat: Infinity,
+      ease: "easeInOut",
+      repeatDelay: 0.5,
+    },
+  },
+
+  // Lightbulb: Filament idea ignite, neon electrical flicker & illumination surge
+  flicker: {
+    animate: {
+      scale: [1, 1.2, 1.02, 1.16, 1],
+      filter: [
+        "brightness(1) drop-shadow(0 0 0px transparent)",
+        "brightness(1.9) drop-shadow(0 0 10px currentColor)",
+        "brightness(1.25) drop-shadow(0 0 3px currentColor)",
+        "brightness(2) drop-shadow(0 0 12px currentColor)",
+        "brightness(1.1) drop-shadow(0 0 1px currentColor)",
+        "brightness(1.7) drop-shadow(0 0 8px currentColor)",
+        "brightness(1) drop-shadow(0 0 0px transparent)",
+      ],
+    },
+    transition: {
+      duration: 2.5,
+      repeat: Infinity,
+      ease: "easeInOut",
+      repeatDelay: 0.7,
+    },
+  },
+
+  // Layers: Floating stack, levitating depth shift
+  float: {
+    animate: {
+      y: [0, -3.5, 0, 1.5, 0],
+      scale: [1, 1.12, 1, 1.06, 1],
+      filter: [
+        "drop-shadow(0 0 0px transparent)",
+        "drop-shadow(0 3px 6px currentColor)",
+        "drop-shadow(0 0 0px transparent)",
+      ],
+    },
+    transition: {
+      duration: 2.6,
+      repeat: Infinity,
+      ease: "easeInOut",
+      repeatDelay: 0.4,
+    },
+  },
+
+  // Terminal: Command prompt micro-jitter, cyber shell vibration & energetic ping
+  jitter: {
+    animate: {
+      x: [0, -2, 2, -1.5, 1.5, -0.5, 0.5, 0],
+      y: [0, 0.5, -0.5, 0],
+      scale: [1, 1.2, 0.94, 1.14, 1],
+      filter: [
+        "brightness(1)",
+        "brightness(1.8) drop-shadow(0 0 9px currentColor)",
+        "brightness(1.2)",
+        "brightness(1.6) drop-shadow(0 0 6px currentColor)",
+        "brightness(1)",
+      ],
+    },
+    transition: {
+      duration: 2.0,
+      repeat: Infinity,
+      ease: "easeInOut",
+      repeatDelay: 0.6,
+    },
+  },
+
+  // Github: Open-source telemetry heartbeat & subtle playful tilt
+  heartbeat: {
+    animate: {
+      scale: [1, 1.25, 0.96, 1.18, 1],
+      rotate: [0, -8, 8, -4, 4, 0],
+      filter: [
+        "drop-shadow(0 0 0px transparent)",
+        "drop-shadow(0 0 8px currentColor)",
+        "drop-shadow(0 0 2px currentColor)",
+        "drop-shadow(0 0 6px currentColor)",
+        "drop-shadow(0 0 0px transparent)",
+      ],
+    },
+    transition: {
+      duration: 2.2,
+      repeat: Infinity,
+      ease: "easeInOut",
+      repeatDelay: 0.5,
+    },
+  },
+
+  // Milestone: Waypoint flag sway, progression swing
+  sway: {
+    animate: {
+      rotate: [0, -14, 14, -7, 7, -2, 2, 0],
+      y: [0, -2.5, 0, 1, 0],
+      scale: [1, 1.14, 1, 1.08, 1],
+      filter: [
+        "drop-shadow(0 0 0px transparent)",
+        "drop-shadow(0 0 6px currentColor)",
+        "drop-shadow(0 0 0px transparent)",
+      ],
+    },
+    transition: {
+      duration: 2.6,
+      repeat: Infinity,
+      ease: "easeInOut",
+      repeatDelay: 0.5,
+    },
+  },
+
+  // Mail: Incoming dispatch chime, floating notification ping
+  chime: {
+    animate: {
+      y: [0, -4, 0, -1.5, 0],
+      rotate: [0, -12, 12, -6, 6, 0],
+      scale: [1, 1.22, 1, 1.1, 1],
+      filter: [
+        "drop-shadow(0 0 0px transparent)",
+        "drop-shadow(0 0 8px currentColor)",
+        "drop-shadow(0 0 0px transparent)",
+      ],
+    },
+    transition: {
+      duration: 2.3,
+      repeat: Infinity,
+      ease: "easeInOut",
+      repeatDelay: 0.7,
+    },
+  },
+
+  // Code2 / Brackets: Syntax bracket breathing & expansion
+  brackets: {
+    animate: {
+      scale: [1, 1.22, 0.94, 1.14, 1],
+      x: [0, -2, 2, -1, 1, 0],
+      filter: [
+        "brightness(1)",
+        "brightness(1.7) drop-shadow(0 0 7px currentColor)",
+        "brightness(1)",
+      ],
+    },
+    transition: {
+      duration: 2.2,
+      repeat: Infinity,
+      ease: "easeInOut",
+      repeatDelay: 0.5,
+    },
+  },
+
+  // Default rhythmic breathing pulse
+  pulse: {
+    animate: {
+      scale: [1, 1.18, 0.96, 1.1, 1],
+      filter: [
+        "drop-shadow(0 0 0px transparent)",
+        "drop-shadow(0 0 6px currentColor)",
+        "drop-shadow(0 0 0px transparent)",
+      ],
+    },
+    transition: {
+      duration: 2.2,
+      repeat: Infinity,
+      ease: "easeInOut",
+      repeatDelay: 0.5,
+    },
+  },
+};
+
+function resolveAnimationType(
+  animationType?: IconAnimationType,
+  text?: string
+): IconAnimationType {
+  if (animationType) return animationType;
+  const lower = (text || "").toLowerCase();
+  if (lower.includes("real engineering") || lower.includes("sparkle")) return "twinkle";
+  if (lower.includes("curiosity") || lower.includes("identity") || lower.includes("compass")) return "compass";
+  if (lower.includes("principles") || lower.includes("philosophy") || lower.includes("lightbulb")) return "flicker";
+  if (lower.includes("scope") || lower.includes("build") || lower.includes("layers")) return "float";
+  if (lower.includes("workstation") || lower.includes("terminal") || lower.includes("currently")) return "jitter";
+  if (lower.includes("open source") || lower.includes("github")) return "heartbeat";
+  if (lower.includes("timeline") || lower.includes("journey") || lower.includes("background")) return "sway";
+  if (lower.includes("touch") || lower.includes("contact") || lower.includes("mail")) return "chime";
+  if (lower.includes("arsenal") || lower.includes("skill") || lower.includes("code")) return "brackets";
+  return "pulse";
+}
+
 export function SectionBadge({
   icon,
   text,
   className,
   color = "blue",
+  animationType,
   delay = 0,
 }: SectionBadgeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(containerRef, { once: true, amount: 0.1 });
   const prefersReducedMotion = usePrefersReducedMotion();
 
-  const [phase, setPhase] = useState<"idle" | "pop" | "jitter" | "typing" | "done">("idle");
   const [displayedLength, setDisplayedLength] = useState(0);
   const [showCursor, setShowCursor] = useState(false);
+  const [hasPopped, setHasPopped] = useState(false);
 
-  // If reduced motion is preferred, render complete badge immediately
+  const resolvedAnimType = resolveAnimationType(animationType, text);
+  const currentAnimation = ICON_ANIMATIONS[resolvedAnimType] || ICON_ANIMATIONS.pulse;
+
+  // Reduced motion: show full text immediately without delays
   useEffect(() => {
     if (prefersReducedMotion) {
-      setPhase("done");
       setDisplayedLength(text.length);
       setShowCursor(false);
+      setHasPopped(true);
     }
   }, [prefersReducedMotion, text.length]);
 
-  // Main animation orchestrator
+  // Main command shell typewriter orchestrator
   useEffect(() => {
     if (prefersReducedMotion || !isInView) return;
 
-    let timeoutPop: NodeJS.Timeout;
-    let timeoutJitter: NodeJS.Timeout;
-    let timeoutTyping: NodeJS.Timeout;
+    let popTimer: NodeJS.Timeout;
+    let typingStartTimer: NodeJS.Timeout;
     let typingInterval: NodeJS.Timeout;
-    let timeoutCursorFade: NodeJS.Timeout;
+    let cursorFadeTimer: NodeJS.Timeout;
 
-    // Step 1: Pop-up icon after initial delay
-    timeoutPop = setTimeout(() => {
-      setPhase("pop");
+    // Pop the icon in after initial delay
+    popTimer = setTimeout(() => {
+      setHasPopped(true);
     }, delay);
 
-    // Step 2: Jitter / pulse / blink icon at 380ms after pop
-    timeoutJitter = setTimeout(() => {
-      setPhase("jitter");
-    }, delay + 380);
-
-    // Step 3: Start typewriter command shell effect at 400ms after jitter
-    timeoutTyping = setTimeout(() => {
-      setPhase("typing");
+    // Start typing letters at command shell cadence (~34ms)
+    typingStartTimer = setTimeout(() => {
       setShowCursor(true);
 
       let currentLen = 0;
-      // Command shell typing cadence (~34ms per character)
       typingInterval = setInterval(() => {
         currentLen += 1;
         setDisplayedLength(currentLen);
 
         if (currentLen >= text.length) {
           clearInterval(typingInterval);
-          setPhase("done");
 
-          // Step 4: Keep cursor blinking for 1.2s post-typing then gracefully fade
-          timeoutCursorFade = setTimeout(() => {
+          // Cursor continues blinking for 1.2s post-typing then smoothly fades
+          cursorFadeTimer = setTimeout(() => {
             setShowCursor(false);
           }, 1200);
         }
       }, 34);
-    }, delay + 780);
+    }, delay + 360);
 
     return () => {
-      clearTimeout(timeoutPop);
-      clearTimeout(timeoutJitter);
-      clearTimeout(timeoutTyping);
+      clearTimeout(popTimer);
+      clearTimeout(typingStartTimer);
       clearInterval(typingInterval);
-      clearTimeout(timeoutCursorFade);
+      clearTimeout(cursorFadeTimer);
     };
   }, [isInView, delay, text, prefersReducedMotion]);
 
-  // Color styling logic
   const colorClass = className || COLOR_CLASSES[color] || COLOR_CLASSES.blue;
-
-  // Icon animation variants
-  const iconVariants = {
-    idle: {
-      scale: prefersReducedMotion ? 1 : 0,
-      opacity: prefersReducedMotion ? 1 : 0,
-      rotate: 0,
-    },
-    pop: {
-      scale: [0, 1.4, 0.92, 1.08, 1],
-      opacity: [0, 1, 1, 1, 1],
-      transition: {
-        duration: 0.38,
-        ease: [0.175, 0.885, 0.32, 1.275] as [number, number, number, number],
-      },
-    },
-    jitter: {
-      scale: [1, 1.28, 0.94, 1.15, 1],
-      rotate: [0, -12, 12, -7, 7, -3, 3, 0],
-      filter: [
-        "brightness(1) drop-shadow(0 0 0px transparent)",
-        "brightness(1.8) drop-shadow(0 0 8px currentColor)",
-        "brightness(1.2) drop-shadow(0 0 3px currentColor)",
-        "brightness(1.6) drop-shadow(0 0 6px currentColor)",
-        "brightness(1) drop-shadow(0 0 0px transparent)",
-      ],
-      transition: {
-        duration: 0.4,
-        ease: "easeInOut" as const,
-      },
-    },
-    typing: {
-      scale: 1,
-      rotate: 0,
-      filter: "brightness(1) drop-shadow(0 0 0px transparent)",
-    },
-    done: {
-      scale: 1,
-      rotate: 0,
-      filter: "brightness(1) drop-shadow(0 0 0px transparent)",
-    },
-  };
 
   return (
     <motion.div
@@ -148,21 +341,43 @@ export function SectionBadge({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       whileHover={{ scale: 1.03 }}
-      transition={{ duration: 0.3 }}
-      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-mono uppercase tracking-widest transition-all duration-300 select-none ${
-        phase === "jitter" ? "ring-1 ring-current/40 shadow-[0_0_12px_currentColor]" : ""
-      } ${colorClass}`}
+      transition={{ duration: 0.35 }}
+      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-mono uppercase tracking-widest select-none transition-all duration-300 ${colorClass}`}
       role="status"
       aria-label={text}
     >
-      {/* Pop & Jitter/Pulsing Icon */}
+      {/* 
+        The Icon Wrapper:
+        - Outer motion.span: Controls the spring pop-up entrance (scales 0 -> 1 with opacity 1).
+          Stays PERMANENTLY at scale: 1, opacity: 1 and NEVER disappears.
+        - Inner motion.span: Executes the continuous, looping signature animation (twinkle, jitter, etc.).
+      */}
       <motion.span
         className="inline-flex items-center justify-center shrink-0"
-        variants={iconVariants}
-        initial="idle"
-        animate={phase}
+        initial={prefersReducedMotion ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
+        animate={
+          prefersReducedMotion || hasPopped
+            ? { scale: 1, opacity: 1 }
+            : { scale: 0, opacity: 0 }
+        }
+        transition={
+          prefersReducedMotion
+            ? { duration: 0 }
+            : {
+                type: "spring",
+                stiffness: 420,
+                damping: 18,
+              }
+        }
       >
-        {icon}
+        <motion.span
+          className="inline-flex items-center justify-center"
+          animate={prefersReducedMotion || !hasPopped ? {} : currentAnimation.animate}
+          transition={prefersReducedMotion || !hasPopped ? {} : currentAnimation.transition}
+          whileHover={{ scale: 1.25, rotate: 8 }}
+        >
+          {icon}
+        </motion.span>
       </motion.span>
 
       {/* Accessible screen-reader text */}
@@ -175,7 +390,7 @@ export function SectionBadge({
           {text}
         </span>
 
-        {/* Real-time typed letters with terminal cursor */}
+        {/* Real-time typed letters with glowing cyber block cursor */}
         <span className="absolute left-0 top-0 bottom-0 whitespace-nowrap flex items-center">
           <span>{text.slice(0, displayedLength)}</span>
           {showCursor && (

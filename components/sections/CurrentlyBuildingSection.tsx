@@ -129,6 +129,7 @@ export function CurrentlyBuildingSection() {
           icon={<Terminal size={14} />}
           text="Active Workstation"
           color="amber"
+          animationType="jitter"
         />
         <motion.h2
           initial={{ opacity: 0, y: 15 }}

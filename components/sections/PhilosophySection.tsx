@@ -19,6 +19,7 @@ export function PhilosophySection() {
           icon={<Lightbulb size={14} />}
           text="Core Principles"
           color="blue"
+          animationType="flicker"
         />
         <motion.h2
           initial={{ opacity: 0, y: 15 }}

@@ -25,6 +25,7 @@ export function WhatIBuildSection() {
           icon={<Layers size={14} />}
           text="Scope of Work"
           color="emerald"
+          animationType="float"
         />
         <motion.h2
           initial={{ opacity: 0, y: 15 }}

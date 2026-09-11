@@ -43,6 +43,7 @@ export function ContactSection() {
           icon={<Mail size={14} />}
           text="Get in Touch"
           color="blue"
+          animationType="chime"
         />
         <motion.h2
           initial={{ opacity: 0, y: 15 }}

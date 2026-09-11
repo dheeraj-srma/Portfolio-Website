@@ -86,6 +86,7 @@ export function GitHubSection() {
           icon={<GithubIcon size={14} />}
           text="Real Open Source Activity"
           color="purple"
+          animationType="heartbeat"
         />
         <motion.h2
           initial={{ opacity: 0, y: 15 }}
