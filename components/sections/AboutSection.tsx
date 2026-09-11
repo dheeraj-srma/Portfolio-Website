@@ -15,7 +15,6 @@ export function AboutSection() {
           icon={<Compass size={14} />}
           text="Curiosity & Identity"
           color="purple"
-          animationType="compass"
         />
         <motion.h2
           initial={{ opacity: 0, y: 15 }}

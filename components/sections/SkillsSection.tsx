@@ -25,7 +25,6 @@ export function SkillsSection() {
           icon={<Code2 size={14} />}
           text="Technical Arsenal"
           color="pink"
-          animationType="brackets"
         />
         <motion.h2
           initial={{ opacity: 0, y: 20 }}

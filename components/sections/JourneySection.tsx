@@ -16,7 +16,6 @@ export function JourneySection() {
           icon={<Milestone size={14} />}
           text="Timeline & Background"
           color="blue"
-          animationType="sway"
         />
         <motion.h2
           initial={{ opacity: 0, y: 15 }}

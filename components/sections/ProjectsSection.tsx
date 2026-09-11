@@ -44,7 +44,6 @@ export function ProjectsSection() {
           icon={<Sparkles size={14} />}
           text="Real Engineering Work"
           color="blue"
-          animationType="twinkle"
         />
         <motion.h2
           initial={{ opacity: 0, y: 15 }}
