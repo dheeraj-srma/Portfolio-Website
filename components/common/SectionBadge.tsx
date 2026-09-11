@@ -102,13 +102,19 @@ export function SectionBadge({
     }
   }, [prefersReducedMotion, text.length]);
 
+  const lastAnimatedTimeRef = useRef<number>(0);
+
   // Viewport scroll entry / exit detection
   useEffect(() => {
     if (prefersReducedMotion) return;
 
     if (isInView && !wasInViewRef.current) {
       wasInViewRef.current = true;
-      runAnimation(delay);
+      // Only run if not recently triggered by navbar navigation (< 600ms)
+      if (Date.now() - lastAnimatedTimeRef.current > 600) {
+        lastAnimatedTimeRef.current = Date.now();
+        runAnimation(delay);
+      }
     } else if (!isInView && wasInViewRef.current) {
       wasInViewRef.current = false;
       // Reset when scrolled out of view so scrolling back triggers cleanly
@@ -128,8 +134,9 @@ export function SectionBadge({
       const mySectionId = sectionId || containerRef.current?.closest("section")?.id;
 
       if (targetId && mySectionId && targetId === mySectionId) {
-        // Smooth scroll takes ~200-350ms to arrive. Trigger badge entrance right on arrival!
-        runAnimation(250);
+        lastAnimatedTimeRef.current = Date.now();
+        // Smooth scroll takes ~200-300ms to arrive. Trigger badge entrance right on arrival!
+        runAnimation(280);
       }
     };
 

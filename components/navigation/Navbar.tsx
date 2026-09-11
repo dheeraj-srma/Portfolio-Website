@@ -5,16 +5,15 @@ import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion"
 import { Terminal, User, Sparkles, FolderGit2, Mail, Menu, X, Compass, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PERSONAL_INFO } from "@/lib/data";
-import { Tooltip } from "@/components/common/Tooltip";
 
 const NAV_ITEMS = [
-  { name: "About", href: "#about", icon: User, tip: "Profile & background" },
-  { name: "Philosophy", href: "#philosophy", icon: Compass, tip: "First-principles engineering" },
-  { name: "What I Build", href: "#what-i-build", icon: Layers, tip: "Systems & architecture" },
-  { name: "Projects", href: "#projects", icon: Sparkles, tip: "Featured software" },
-  { name: "Building Now", href: "#currently-building", icon: Terminal, tip: "Active lab & experiments" },
-  { name: "GitHub", href: "#github", icon: FolderGit2, tip: "Telemetry & activity" },
-  { name: "Contact", href: "#contact", icon: Mail, tip: "Direct channels" },
+  { name: "About", href: "#about", icon: User },
+  { name: "Philosophy", href: "#philosophy", icon: Compass },
+  { name: "What I Build", href: "#what-i-build", icon: Layers },
+  { name: "Projects", href: "#projects", icon: Sparkles },
+  { name: "Building Now", href: "#currently-building", icon: Terminal },
+  { name: "GitHub", href: "#github", icon: FolderGit2 },
+  { name: "Contact", href: "#contact", icon: Mail },
 ];
 
 interface NavMetric {
@@ -662,51 +661,43 @@ export function Navbar() {
               const sectionId = item.href.substring(1);
               const isActive = activeSection === sectionId;
               return (
-                <Tooltip
+                <a
                   key={item.name}
-                  content={item.tip}
-                  position="bottom"
-                  delay={200}
+                  ref={(el) => {
+                    navItemRefs.current[sectionId] = el;
+                  }}
+                  href={item.href}
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                  onClick={(e) => handleLinkClick(e, item.href)}
+                  className={cn(
+                    "relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-full select-none transition-colors duration-200 cursor-default",
+                    isActive
+                      ? "text-white font-semibold"
+                      : "text-gray-400 hover:text-white"
+                  )}
                 >
-                  <a
-                    ref={(el) => {
-                      navItemRefs.current[sectionId] = el;
-                    }}
-                    href={item.href}
-                    draggable={false}
-                    onDragStart={(e) => e.preventDefault()}
-                    onClick={(e) => handleLinkClick(e, item.href)}
-                    className={cn(
-                      "relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-full select-none transition-colors duration-200 cursor-default",
-                      isActive
-                        ? "text-white font-semibold"
-                        : "text-gray-400 hover:text-white"
-                    )}
-                  >
-                    <span className="relative z-10 block transition-transform duration-150 active:scale-95 pointer-events-none">
-                      {item.name}
-                    </span>
-                  </a>
-                </Tooltip>
+                  <span className="relative z-10 block transition-transform duration-150 active:scale-95 pointer-events-none">
+                    {item.name}
+                  </span>
+                </a>
               );
             })}
           </div>
 
           {/* CTA Right Action */}
           <div className="hidden sm:flex items-center gap-3 shrink-0">
-            <Tooltip content="Direct Note & Channels" position="bottom" delay={150}>
-              <motion.a
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.96 }}
-                href="#contact"
-                onClick={(e) => scrollToSection(e, "#contact")}
-                className="relative inline-flex items-center justify-center p-0.5 overflow-hidden text-xs font-semibold rounded-full group bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg hover:shadow-blue-500/25 transition-all duration-300 cursor-default"
-              >
-                <span className="px-4 py-1.5 transition-all ease-in duration-75 bg-[#0A0A0C] rounded-full group-hover:bg-transparent">
-                  Connect
-                </span>
-              </motion.a>
-            </Tooltip>
+            <motion.a
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.96 }}
+              href="#contact"
+              onClick={(e) => scrollToSection(e, "#contact")}
+              className="relative inline-flex items-center justify-center p-0.5 overflow-hidden text-xs font-semibold rounded-full group bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg hover:shadow-blue-500/25 transition-all duration-300 cursor-default"
+            >
+              <span className="px-4 py-1.5 transition-all ease-in duration-75 bg-[#0A0A0C] rounded-full group-hover:bg-transparent">
+                Connect
+              </span>
+            </motion.a>
           </div>
 
           {/* Mobile Hamburger Button */}
