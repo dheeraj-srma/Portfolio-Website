@@ -5,22 +5,18 @@ import { motion } from "framer-motion";
 import { Milestone, CheckCircle2, ChevronRight, Briefcase, GraduationCap } from "lucide-react";
 import { JOURNEY_MILESTONES } from "@/lib/data";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
+import { SectionBadge } from "@/components/common/SectionBadge";
 
 export function JourneySection() {
   return (
     <section id="journey" className="py-24 px-4 md:px-8 max-w-5xl mx-auto relative z-10">
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4 }}
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-xs font-mono text-blue-300 uppercase tracking-widest"
-        >
-          <Milestone size={14} />
-          <span>Timeline & Background</span>
-        </motion.div>
+        <SectionBadge
+          icon={<Milestone size={14} />}
+          text="Timeline & Background"
+          color="blue"
+        />
         <motion.h2
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}

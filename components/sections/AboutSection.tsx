@@ -4,22 +4,18 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Compass, BookOpen, Atom, Binary, Sparkles, Orbit, Telescope, ScrollText } from "lucide-react";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
+import { SectionBadge } from "@/components/common/SectionBadge";
 
 export function AboutSection() {
   return (
     <section id="about" className="py-20 sm:py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10 scroll-mt-20">
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4 }}
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/30 bg-purple-500/10 text-xs font-mono text-purple-300 uppercase tracking-widest"
-        >
-          <Compass size={14} />
-          <span>Curiosity & Identity</span>
-        </motion.div>
+        <SectionBadge
+          icon={<Compass size={14} />}
+          text="Curiosity & Identity"
+          color="purple"
+        />
         <motion.h2
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}

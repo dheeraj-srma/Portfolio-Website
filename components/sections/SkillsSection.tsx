@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Code2, Layers, Cpu, Database, Wrench, BarChart2 } from "lucide-react";
 import { SKILL_CATEGORIES } from "@/lib/data";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
+import { SectionBadge } from "@/components/common/SectionBadge";
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
   "Programming Languages": Code2,
@@ -20,16 +21,11 @@ export function SkillsSection() {
     <section id="skills" className="py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10">
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-pink-500/30 bg-pink-500/10 text-xs font-mono text-pink-300 uppercase tracking-widest"
-        >
-          <Code2 size={14} />
-          <span>Technical Arsenal</span>
-        </motion.div>
+        <SectionBadge
+          icon={<Code2 size={14} />}
+          text="Technical Arsenal"
+          color="pink"
+        />
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

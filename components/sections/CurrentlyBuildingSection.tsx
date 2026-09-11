@@ -5,6 +5,7 @@ import { motion, useInView } from "framer-motion";
 import { Terminal, BookOpen } from "lucide-react";
 import { CURRENTLY_BUILDING, CONTINUOUS_LEARNING } from "@/lib/data";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
+import { SectionBadge } from "@/components/common/SectionBadge";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 interface DonutProgressProps {
@@ -124,16 +125,11 @@ export function CurrentlyBuildingSection() {
     <section id="currently-building" className="py-20 sm:py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10 scroll-mt-20">
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4 }}
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-xs font-mono text-amber-300 uppercase tracking-widest"
-        >
-          <Terminal size={14} />
-          <span>Active Workstation</span>
-        </motion.div>
+        <SectionBadge
+          icon={<Terminal size={14} />}
+          text="Active Workstation"
+          color="amber"
+        />
         <motion.h2
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { BrainCircuit, Layers, LineChart, Zap, FlaskConical, PackageCheck } from "lucide-react";
 import { WHAT_I_BUILD } from "@/lib/data";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
+import { SectionBadge } from "@/components/common/SectionBadge";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   BrainCircuit,
@@ -20,16 +21,11 @@ export function WhatIBuildSection() {
     <section id="what-i-build" className="py-20 sm:py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10 scroll-mt-20">
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4 }}
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-mono text-emerald-300 uppercase tracking-widest"
-        >
-          <Layers size={14} />
-          <span>Scope of Work</span>
-        </motion.div>
+        <SectionBadge
+          icon={<Layers size={14} />}
+          text="Scope of Work"
+          color="emerald"
+        />
         <motion.h2
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}

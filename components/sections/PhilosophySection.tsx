@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Compass, Lightbulb, ChevronRight, Binary, ArrowRight } from "lucide-react";
 import { ENGINEERING_PHILOSOPHY } from "@/lib/data";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
+import { SectionBadge } from "@/components/common/SectionBadge";
 
 export function PhilosophySection() {
   const [selectedId, setSelectedId] = useState(ENGINEERING_PHILOSOPHY[0].id);
@@ -14,16 +15,11 @@ export function PhilosophySection() {
     <section id="philosophy" className="py-20 sm:py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10 scroll-mt-20">
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4 }}
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-xs font-mono text-blue-300 uppercase tracking-widest"
-        >
-          <Lightbulb size={14} />
-          <span>Core Principles</span>
-        </motion.div>
+        <SectionBadge
+          icon={<Lightbulb size={14} />}
+          text="Core Principles"
+          color="blue"
+        />
         <motion.h2
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}

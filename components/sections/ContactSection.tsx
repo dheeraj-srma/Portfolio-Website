@@ -6,6 +6,7 @@ import { Mail, Send, CheckCircle2, MessageSquare, Copy, Sparkles } from "lucide-
 import { GithubIcon, LinkedinIcon, InstagramIcon } from "@/components/common/Icons";
 import { PERSONAL_INFO } from "@/lib/data";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
+import { SectionBadge } from "@/components/common/SectionBadge";
 
 export function ContactSection() {
   const [formState, setFormState] = useState({ name: "", email: "", message: "" });
@@ -38,16 +39,11 @@ export function ContactSection() {
     <section id="contact" className="py-20 sm:py-24 px-4 md:px-8 max-w-5xl mx-auto relative z-10 scroll-mt-20">
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4 }}
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-xs font-mono text-blue-300 uppercase tracking-widest"
-        >
-          <Mail size={14} />
-          <span>Get in Touch</span>
-        </motion.div>
+        <SectionBadge
+          icon={<Mail size={14} />}
+          text="Get in Touch"
+          color="blue"
+        />
         <motion.h2
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
