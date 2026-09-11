@@ -18,6 +18,8 @@ import { SpotlightCard } from "@/components/common/SpotlightCard";
 import { SectionBadge } from "@/components/common/SectionBadge";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const WEB3FORMS_ACCESS_KEY =
+  process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY || "c60dbaa0-5762-4803-9753-0a973123f6a8";
 
 export function ContactSection() {
   const [formState, setFormState] = useState({
@@ -81,14 +83,14 @@ export function ContactSection() {
     setTouched({ name: false, email: false, message: false });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Trigger touched on all fields to highlight any errors
     setTouched({ name: true, email: true, message: true });
     setErrorMessage(null);
 
-    // Strict frontend barrier: Reject immediately without Name, Email, or Message
+    // Strict validation barrier: Reject without Name, Email, or Message
     const cleanName = formState.name.trim();
     const cleanEmail = formState.email.trim();
     const cleanMessage = formState.message.trim();
@@ -115,9 +117,32 @@ export function ContactSection() {
 
     setLoading(true);
 
-    // Smooth tactile transition & mailto dispatch
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_ACCESS_KEY,
+          name: cleanName,
+          email: cleanEmail,
+          message: cleanMessage,
+          subject: `Portfolio Message from ${cleanName}`,
+          from_name: "Portfolio Contact Hub",
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Failed to deliver message via Web3Forms. Please try emailing directly."
+        );
+      }
+
+      // Success state
       setSubmitted(true);
 
       // Trigger celebratory confetti
@@ -131,14 +156,13 @@ export function ContactSection() {
       } catch {
         // Safe fallback
       }
-
-      // Open mail client with pre-filled subject and structured body
-      const subject = encodeURIComponent(`Message from ${cleanName} via Portfolio`);
-      const body = encodeURIComponent(
-        `${cleanMessage}\n\n---\nSender: ${cleanName}\nReply to: ${cleanEmail}`
-      );
-      window.location.href = `mailto:${PERSONAL_INFO.email}?subject=${subject}&body=${body}`;
-    }, 600);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "An unexpected network error occurred.";
+      setErrorMessage(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -290,10 +314,10 @@ export function ContactSection() {
                     </div>
                     <div>
                       <h3 className="text-2xl font-bold text-white tracking-tight">
-                        Dispatched to Mail Client!
+                        Message Dispatched!
                       </h3>
                       <p className="text-sm text-gray-400 font-light mt-1.5 leading-relaxed">
-                        Thank you, <span className="text-white font-medium">{formState.name}</span>. Your mail client was opened with your message ready to send directly to <span className="text-blue-400 font-mono text-xs">{PERSONAL_INFO.email}</span>.
+                        Thank you, <span className="text-white font-medium">{formState.name}</span>. Your note has been delivered directly to my inbox. I'll review and get back to <span className="text-blue-400 font-mono text-xs">{formState.email}</span> soon.
                       </p>
                     </div>
                   </div>
@@ -309,7 +333,7 @@ export function ContactSection() {
                   </motion.button>
                 </motion.div>
               ) : (
-                /* Interactive Form with Frontend Barrier */
+                /* Interactive Form with Validation Barrier */
                 <form
                   key="contact-form"
                   onSubmit={handleSubmit}
@@ -451,7 +475,7 @@ export function ContactSection() {
                     {loading ? (
                       <>
                         <Loader2 size={16} className="animate-spin" />
-                        <span>Preparing Message...</span>
+                        <span>Dispatching Transmission...</span>
                       </>
                     ) : (
                       <>
