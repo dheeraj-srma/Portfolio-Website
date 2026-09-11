@@ -115,8 +115,14 @@ export function Navbar() {
       if (!metric) return;
 
       // Stop any existing spring animations immediately
-      if (activeAnimationXRef.current) activeAnimationXRef.current.stop();
-      if (activeAnimationWRef.current) activeAnimationWRef.current.stop();
+      if (activeAnimationXRef.current) {
+        activeAnimationXRef.current.stop();
+        activeAnimationXRef.current = null;
+      }
+      if (activeAnimationWRef.current) {
+        activeAnimationWRef.current.stop();
+        activeAnimationWRef.current = null;
+      }
 
       // Lock scroll listeners so intermediate scrollY values never pull the pill backwards
       isNavigatingRef.current = true;
@@ -181,18 +187,118 @@ export function Navbar() {
     [pillReady, pillX, pillWidth]
   );
 
-  // Initial mount & resize measurements
+  // Continuous page scroll tracker: maps current viewport section to navbar highlight
+  const handleScroll = useCallback(() => {
+    const scrollY = window.scrollY;
+    setScrolled(scrollY > 40);
+
+    // Lock during dragging
+    if (isDraggingRef.current) return;
+
+    // Lock during programmatic smooth navigation
+    if (isNavigatingRef.current) {
+      if (Math.abs(scrollY - navigatingTargetScrollRef.current) <= 4) {
+        isNavigatingRef.current = false;
+      } else {
+        // Reset debounce timer on every scroll frame while programmatic scroll is in motion
+        if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
+        scrollEndTimerRef.current = setTimeout(() => {
+          isNavigatingRef.current = false;
+        }, 120);
+        return;
+      }
+    }
+
+    const metrics = navMetricsRef.current;
+    if (!metrics || metrics.length < 2) return;
+
+    const first = metrics[0];
+    const last = metrics[metrics.length - 1];
+
+    // 1. Reached or below last section (or bottom of page) -> Lock to last (Contact)
+    const isAtBottom =
+      window.innerHeight + scrollY >= document.documentElement.scrollHeight - 60;
+    if (isAtBottom || scrollY >= last.targetScrollTop - 60) {
+      scrollTargetXRef.current = last.tabLeft;
+      scrollTargetWRef.current = last.tabWidth;
+      if (activeSectionRef.current !== last.id) {
+        activeSectionRef.current = last.id;
+        setActiveSection(last.id);
+      }
+      return;
+    }
+
+    // 2. Reached or above first section (Hero / top of page) -> Lock to first (About)
+    if (scrollY <= first.targetScrollTop - 80) {
+      scrollTargetXRef.current = first.tabLeft;
+      scrollTargetWRef.current = first.tabWidth;
+      if (activeSectionRef.current !== first.id) {
+        activeSectionRef.current = first.id;
+        setActiveSection(first.id);
+      }
+      return;
+    }
+
+    // 3. Focal section matching: find which section is in view
+    for (let i = 0; i < metrics.length - 1; i++) {
+      const a = metrics[i];
+      const b = metrics[i + 1];
+
+      // If scrollY is before b's arrival line, we are in section a's region
+      if (scrollY < b.targetScrollTop) {
+        const span = b.targetScrollTop - a.targetScrollTop;
+        const transitionZone = Math.min(220, Math.max(80, span * 0.35));
+        const transitionStart = b.targetScrollTop - transitionZone;
+
+        if (scrollY < transitionStart) {
+          // Firmly centered on section a
+          scrollTargetXRef.current = a.tabLeft;
+          scrollTargetWRef.current = a.tabWidth;
+          if (activeSectionRef.current !== a.id) {
+            activeSectionRef.current = a.id;
+            setActiveSection(a.id);
+          }
+        } else {
+          // Smooth glide into section b as b enters under the navbar
+          const rawProgress = (scrollY - transitionStart) / transitionZone;
+          // Cubic smoothstep easing: 3t^2 - 2t^3
+          const t = rawProgress * rawProgress * (3 - 2 * rawProgress);
+
+          scrollTargetXRef.current = a.tabLeft + t * (b.tabLeft - a.tabLeft);
+          scrollTargetWRef.current = a.tabWidth + t * (b.tabWidth - a.tabWidth);
+
+          const activeId = rawProgress < 0.5 ? a.id : b.id;
+          if (activeSectionRef.current !== activeId) {
+            activeSectionRef.current = activeId;
+            setActiveSection(activeId);
+          }
+        }
+        return;
+      }
+    }
+
+    // Fallback to last section
+    scrollTargetXRef.current = last.tabLeft;
+    scrollTargetWRef.current = last.tabWidth;
+    if (activeSectionRef.current !== last.id) {
+      activeSectionRef.current = last.id;
+      setActiveSection(last.id);
+    }
+  }, []);
+
+  // Initial mount, resize & layout change measurements
   useEffect(() => {
     const updateMetricsAndPosition = () => {
       measureMetrics();
       if (!isDraggingRef.current && !isNavigatingRef.current) {
-        const metric = navMetricsRef.current.find((m) => m.id === activeSectionRef.current);
-        if (metric) {
-          scrollTargetXRef.current = metric.tabLeft;
-          scrollTargetWRef.current = metric.tabWidth;
-          if (!pillReady) {
-            pillX.set(metric.tabLeft);
-            pillWidth.set(metric.tabWidth);
+        handleScroll();
+        if (!pillReady) {
+          const metric =
+            navMetricsRef.current.find((m) => m.id === activeSectionRef.current) ||
+            navMetricsRef.current[0];
+          if (metric) {
+            pillX.set(scrollTargetXRef.current || metric.tabLeft);
+            pillWidth.set(scrollTargetWRef.current || metric.tabWidth);
             setPillReady(true);
           }
         }
@@ -208,12 +314,27 @@ export function Navbar() {
       document.fonts.ready.then(updateMetricsAndPosition);
     }
 
+    // Dynamic layout observer: remeasures when dynamic content (e.g. GitHub repos, fonts, images) shifts layout
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => {
+        updateMetricsAndPosition();
+      });
+      if (document.body) {
+        resizeObserver.observe(document.body);
+      }
+      if (navTrackRef.current) {
+        resizeObserver.observe(navTrackRef.current);
+      }
+    }
+
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(timer);
       window.removeEventListener("resize", updateMetricsAndPosition);
+      resizeObserver?.disconnect();
     };
-  }, [measureMetrics, pillReady, pillX, pillWidth]);
+  }, [measureMetrics, handleScroll, pillReady, pillX, pillWidth]);
 
   // Persistent continuous RAF lerp loop for pill movement during manual page scrolling
   useEffect(() => {
@@ -241,82 +362,8 @@ export function Navbar() {
     };
   }, [pillX, pillWidth]);
 
-  // Continuous page scroll tracker: glides the highlight continuously between sections
+  // Scroll listeners with wheel / touch interrupt support
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      setScrolled(scrollY > 40);
-
-      // Lock during dragging
-      if (isDraggingRef.current) return;
-
-      // Lock during programmatic smooth navigation
-      if (isNavigatingRef.current) {
-        if (Math.abs(scrollY - navigatingTargetScrollRef.current) <= 3) {
-          isNavigatingRef.current = false;
-        } else {
-          // Reset debounce timer on every scroll frame while programmatic scroll is in motion
-          if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
-          scrollEndTimerRef.current = setTimeout(() => {
-            isNavigatingRef.current = false;
-          }, 120);
-          return;
-        }
-      }
-
-      const metrics = navMetricsRef.current;
-      if (!metrics || metrics.length < 2) return;
-
-      const first = metrics[0];
-      const last = metrics[metrics.length - 1];
-
-      // Reached or above first section
-      if (scrollY <= first.targetScrollTop) {
-        scrollTargetXRef.current = first.tabLeft;
-        scrollTargetWRef.current = first.tabWidth;
-        if (activeSectionRef.current !== first.id) {
-          activeSectionRef.current = first.id;
-          setActiveSection(first.id);
-        }
-        return;
-      }
-
-      // Reached or below last section (or bottom of page)
-      if (
-        scrollY >= last.targetScrollTop ||
-        window.innerHeight + scrollY >= document.documentElement.scrollHeight - 50
-      ) {
-        scrollTargetXRef.current = last.tabLeft;
-        scrollTargetWRef.current = last.tabWidth;
-        if (activeSectionRef.current !== last.id) {
-          activeSectionRef.current = last.id;
-          setActiveSection(last.id);
-        }
-        return;
-      }
-
-      // Continuously glide between adjacent sections based on scroll progress
-      for (let i = 0; i < metrics.length - 1; i++) {
-        const a = metrics[i];
-        const b = metrics[i + 1];
-        if (scrollY >= a.targetScrollTop && scrollY <= b.targetScrollTop) {
-          const span = b.targetScrollTop - a.targetScrollTop;
-          const t = span > 0 ? (scrollY - a.targetScrollTop) / span : 0;
-
-          // Continuous linear interpolation for both X position and Width
-          scrollTargetXRef.current = a.tabLeft + t * (b.tabLeft - a.tabLeft);
-          scrollTargetWRef.current = a.tabWidth + t * (b.tabWidth - a.tabWidth);
-
-          const closestId = t < 0.5 ? a.id : b.id;
-          if (activeSectionRef.current !== closestId) {
-            activeSectionRef.current = closestId;
-            setActiveSection(closestId);
-          }
-          return;
-        }
-      }
-    };
-
     // User intentional wheel or touch unlocks navigation immediately
     const handleUserScrollInterrupt = () => {
       if (isNavigatingRef.current) {
@@ -324,8 +371,14 @@ export function Navbar() {
         if (scrollEndTimerRef.current) {
           clearTimeout(scrollEndTimerRef.current);
         }
-        if (activeAnimationXRef.current) activeAnimationXRef.current.stop();
-        if (activeAnimationWRef.current) activeAnimationWRef.current.stop();
+        if (activeAnimationXRef.current) {
+          activeAnimationXRef.current.stop();
+          activeAnimationXRef.current = null;
+        }
+        if (activeAnimationWRef.current) {
+          activeAnimationWRef.current.stop();
+          activeAnimationWRef.current = null;
+        }
       }
     };
 
@@ -342,7 +395,7 @@ export function Navbar() {
         clearTimeout(scrollEndTimerRef.current);
       }
     };
-  }, []);
+  }, [handleScroll]);
 
   // RAF loop for buttery-smooth page scrubbing during drag
   const startScrubLoop = () => {
@@ -433,6 +486,15 @@ export function Navbar() {
   const handleTrackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
     measureMetrics();
+
+    if (activeAnimationXRef.current) {
+      activeAnimationXRef.current.stop();
+      activeAnimationXRef.current = null;
+    }
+    if (activeAnimationWRef.current) {
+      activeAnimationWRef.current.stop();
+      activeAnimationWRef.current = null;
+    }
 
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
