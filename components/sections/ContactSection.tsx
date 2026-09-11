@@ -1,18 +1,70 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { Mail, Send, CheckCircle2, MessageSquare, Copy, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Mail,
+  Send,
+  CheckCircle2,
+  AlertCircle,
+  Copy,
+  Loader2,
+  RotateCcw,
+} from "lucide-react";
+import confetti from "canvas-confetti";
 import { GithubIcon, LinkedinIcon, InstagramIcon } from "@/components/common/Icons";
 import { PERSONAL_INFO } from "@/lib/data";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
 import { SectionBadge } from "@/components/common/SectionBadge";
 
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 export function ContactSection() {
-  const [formState, setFormState] = useState({ name: "", email: "", message: "" });
-  const [submitted, setSubmitted] = useState(false);
+  const [formState, setFormState] = useState({
+    name: "",
+    email: "",
+    message: "",
+    botcheck: "",
+  });
+
+  const [touched, setTouched] = useState({
+    name: false,
+    email: false,
+    message: false,
+  });
+
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [devModeNotice, setDevModeNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Field validation checks
+  const nameError =
+    touched.name && !formState.name.trim()
+      ? "Name is required."
+      : touched.name && formState.name.trim().length < 2
+      ? "Name must be at least 2 characters."
+      : null;
+
+  const emailError =
+    touched.email && !formState.email.trim()
+      ? "Email address is required."
+      : touched.email && !EMAIL_REGEX.test(formState.email.trim())
+      ? "Please enter a valid email (e.g. name@domain.com)."
+      : null;
+
+  const messageError =
+    touched.message && !formState.message.trim()
+      ? "Message is required."
+      : touched.message && formState.message.trim().length < 5
+      ? "Message must be at least 5 characters."
+      : null;
+
+  const isFormValid =
+    formState.name.trim().length >= 2 &&
+    EMAIL_REGEX.test(formState.email.trim()) &&
+    formState.message.trim().length >= 5;
 
   const handleCopyEmail = () => {
     navigator.clipboard.writeText(PERSONAL_INFO.email);
@@ -20,19 +72,88 @@ export function ContactSection() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleBlur = (field: "name" | "email" | "message") => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
+  const handleReset = () => {
+    setSubmitted(false);
+    setErrorMessage(null);
+    setDevModeNotice(null);
+    setFormState({ name: "", email: "", message: "", botcheck: "" });
+    setTouched({ name: false, email: false, message: false });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formState.name || !formState.email || !formState.message) return;
+
+    // Trigger touched on all fields to highlight any errors
+    setTouched({ name: true, email: true, message: true });
+    setErrorMessage(null);
+    setDevModeNotice(null);
+
+    // Strict client-side barrier: Reject without name, email, or message
+    if (!formState.name.trim() || !formState.email.trim() || !formState.message.trim()) {
+      setErrorMessage("Barrier Check: Name, Email, and Message are all required before sending.");
+      return;
+    }
+
+    if (!EMAIL_REGEX.test(formState.email.trim())) {
+      setErrorMessage("Please enter a valid email address.");
+      return;
+    }
+
+    if (formState.message.trim().length < 5) {
+      setErrorMessage("Please enter a message with at least 5 characters.");
+      return;
+    }
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formState.name.trim(),
+          email: formState.email.trim(),
+          message: formState.message.trim(),
+          botcheck: formState.botcheck,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to dispatch email. Please try again.");
+      }
+
+      // Success
       setSubmitted(true);
-      window.location.href = `mailto:${PERSONAL_INFO.email}?subject=Message from ${encodeURIComponent(
-        formState.name
-      )}&body=${encodeURIComponent(formState.message + "\n\nReply to: " + formState.email)}`;
-      setFormState({ name: "", email: "", message: "" });
-    }, 800);
+      if (data.devMode) {
+        setDevModeNotice(data.message);
+      }
+
+      // Trigger celebratory confetti
+      try {
+        confetti({
+          particleCount: 75,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ["#3b82f6", "#60a5fa", "#93c5fd", "#ffffff"],
+        });
+      } catch {
+        // Confetti fallback safely ignored
+      }
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "An unexpected network error occurred.";
+      setErrorMessage(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -64,9 +185,9 @@ export function ContactSection() {
         </motion.p>
       </div>
 
-      {/* Synchronized Parallel Two-Panel Grid (Starts and Ends at Same Vertical Level) */}
+      {/* Synchronized Parallel Two-Panel Grid */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
-        {/* Left Side: Direct Channels (Stretches to match exact height of right form) */}
+        {/* Left Side: Direct Channels */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -159,7 +280,7 @@ export function ContactSection() {
           </SpotlightCard>
         </motion.div>
 
-        {/* Right Side: Message Form */}
+        {/* Right Side: Message Form or Success State */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -168,85 +289,213 @@ export function ContactSection() {
           className="md:col-span-7 flex flex-col h-full"
         >
           <SpotlightCard className="h-full p-8 flex flex-col justify-between border border-white/10 hover:border-white/20 transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
-            <form onSubmit={handleSubmit} className="flex flex-col justify-between h-full space-y-5">
-              <div>
-                <h3 className="text-xl font-bold text-white tracking-tight mb-2">
-                  Send a Note
-                </h3>
-                <p className="text-xs text-gray-400 font-light">
-                  Drop an inquiry, project proposition, or engineering question.
-                </p>
-              </div>
+            <AnimatePresence mode="wait">
+              {submitted ? (
+                /* Success Confirmation Card */
+                <motion.div
+                  key="success-card"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="flex flex-col justify-between h-full py-6 space-y-6"
+                >
+                  <div className="space-y-4">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                      <CheckCircle2 size={24} />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-white tracking-tight">
+                        Message Dispatched!
+                      </h3>
+                      <p className="text-sm text-gray-400 font-light mt-1.5 leading-relaxed">
+                        Thank you, <span className="text-white font-medium">{formState.name}</span>. Your note has been delivered directly to my inbox. I'll review and reply to <span className="text-blue-400 font-mono text-xs">{formState.email}</span> soon.
+                      </p>
+                    </div>
 
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label htmlFor="name" className="text-xs font-mono text-gray-400 block">
-                    Your Name
-                  </label>
+                    {devModeNotice && (
+                      <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs font-mono text-blue-300">
+                        ℹ️ {devModeNotice}
+                      </div>
+                    )}
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.015 }}
+                    whileTap={{ scale: 0.985 }}
+                    onClick={handleReset}
+                    className="w-full py-3 px-6 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw size={14} />
+                    <span>Send Another Note</span>
+                  </motion.button>
+                </motion.div>
+              ) : (
+                /* Interactive Form */
+                <form
+                  key="contact-form"
+                  onSubmit={handleSubmit}
+                  noValidate
+                  className="flex flex-col justify-between h-full space-y-5"
+                >
+                  <div>
+                    <h3 className="text-xl font-bold text-white tracking-tight mb-2">
+                      Send a Note
+                    </h3>
+                    <p className="text-xs text-gray-400 font-light">
+                      Drop an inquiry, project proposition, or engineering question. All fields required.
+                    </p>
+                  </div>
+
+                  {/* Error Notification Banner */}
+                  <AnimatePresence>
+                    {errorMessage && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-start gap-2.5 font-mono"
+                      >
+                        <AlertCircle size={16} className="text-red-400 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <p>{errorMessage}</p>
+                          <p className="text-[10px] text-gray-400">
+                            Alternatively, email directly at:{" "}
+                            <span className="text-white underline cursor-pointer" onClick={handleCopyEmail}>
+                              {PERSONAL_INFO.email}
+                            </span>
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Honeypot Field (Invisible to Humans, Traps Spam Bots) */}
                   <input
-                    id="name"
                     type="text"
-                    required
-                    value={formState.name}
-                    onChange={(e) => setFormState({ ...formState, name: e.target.value })}
-                    placeholder="e.g. Alex Turing"
-                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                    name="botcheck"
+                    value={formState.botcheck}
+                    onChange={(e) => setFormState({ ...formState, botcheck: e.target.value })}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    style={{ position: "absolute", left: "-9999px", opacity: 0 }}
                   />
-                </div>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="email" className="text-xs font-mono text-gray-400 block">
-                    Your Email
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    required
-                    value={formState.email}
-                    onChange={(e) => setFormState({ ...formState, email: e.target.value })}
-                    placeholder="alex@example.com"
-                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors font-mono"
-                  />
-                </div>
+                  <div className="space-y-4">
+                    {/* Name Input with Barrier Check */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label htmlFor="name" className="text-xs font-mono text-gray-400 block">
+                          Your Name <span className="text-blue-400">*</span>
+                        </label>
+                        {nameError && (
+                          <span className="text-[10px] font-mono text-red-400">
+                            {nameError}
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        id="name"
+                        type="text"
+                        required
+                        value={formState.name}
+                        onChange={(e) => setFormState({ ...formState, name: e.target.value })}
+                        onBlur={() => handleBlur("name")}
+                        placeholder="e.g. Alex Turing"
+                        className={`w-full px-4 py-3 rounded-xl bg-black/40 border text-sm text-white placeholder-gray-600 focus:outline-none transition-colors font-mono ${
+                          nameError
+                            ? "border-red-500/50 focus:border-red-400"
+                            : "border-white/10 focus:border-blue-500"
+                        }`}
+                      />
+                    </div>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="message" className="text-xs font-mono text-gray-400 block">
-                    Message
-                  </label>
-                  <textarea
-                    id="message"
-                    required
-                    rows={4}
-                    value={formState.message}
-                    onChange={(e) => setFormState({ ...formState, message: e.target.value })}
-                    placeholder="What are you building or thinking about? Ask an engineering question or say hello."
-                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors font-mono resize-none"
-                  />
-                </div>
-              </div>
+                    {/* Email Input with Barrier Check */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label htmlFor="email" className="text-xs font-mono text-gray-400 block">
+                          Your Email <span className="text-blue-400">*</span>
+                        </label>
+                        {emailError && (
+                          <span className="text-[10px] font-mono text-red-400">
+                            {emailError}
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        id="email"
+                        type="email"
+                        required
+                        value={formState.email}
+                        onChange={(e) => setFormState({ ...formState, email: e.target.value })}
+                        onBlur={() => handleBlur("email")}
+                        placeholder="alex@example.com"
+                        className={`w-full px-4 py-3 rounded-xl bg-black/40 border text-sm text-white placeholder-gray-600 focus:outline-none transition-colors font-mono ${
+                          emailError
+                            ? "border-red-500/50 focus:border-red-400"
+                            : "border-white/10 focus:border-blue-500"
+                        }`}
+                      />
+                    </div>
 
-              <motion.button
-                whileHover={{ scale: 1.015 }}
-                whileTap={{ scale: 0.985 }}
-                type="submit"
-                disabled={loading}
-                className="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] mt-2"
-              >
-                {loading ? (
-                  <span>Preparing Message...</span>
-                ) : submitted ? (
-                  <>
-                    <CheckCircle2 size={16} />
-                    <span>Dispatched to Mail Client!</span>
-                  </>
-                ) : (
-                  <>
-                    <Send size={14} />
-                    <span>Send Message</span>
-                  </>
-                )}
-              </motion.button>
-            </form>
+                    {/* Message Input with Barrier Check */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label htmlFor="message" className="text-xs font-mono text-gray-400 block">
+                          Message <span className="text-blue-400">*</span>
+                        </label>
+                        {messageError && (
+                          <span className="text-[10px] font-mono text-red-400">
+                            {messageError}
+                          </span>
+                        )}
+                      </div>
+                      <textarea
+                        id="message"
+                        required
+                        rows={4}
+                        value={formState.message}
+                        onChange={(e) => setFormState({ ...formState, message: e.target.value })}
+                        onBlur={() => handleBlur("message")}
+                        placeholder="What are you building or thinking about? Ask an engineering question or say hello."
+                        className={`w-full px-4 py-3 rounded-xl bg-black/40 border text-sm text-white placeholder-gray-600 focus:outline-none transition-colors font-mono resize-none ${
+                          messageError
+                            ? "border-red-500/50 focus:border-red-400"
+                            : "border-white/10 focus:border-blue-500"
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Submission Button with dynamic loading state */}
+                  <motion.button
+                    whileHover={!loading ? { scale: 1.015 } : undefined}
+                    whileTap={!loading ? { scale: 0.985 } : undefined}
+                    type="submit"
+                    disabled={loading}
+                    className={`w-full py-3.5 px-6 rounded-xl font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer mt-2 ${
+                      loading
+                        ? "bg-blue-800 text-gray-300 cursor-not-allowed"
+                        : isFormValid
+                        ? "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)]"
+                        : "bg-blue-600/70 hover:bg-blue-600 text-white/90"
+                    }`}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>Dispatching Transmission...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send size={14} />
+                        <span>Send Message</span>
+                      </>
+                    )}
+                  </motion.button>
+                </form>
+              )}
+            </AnimatePresence>
           </SpotlightCard>
         </motion.div>
       </div>
