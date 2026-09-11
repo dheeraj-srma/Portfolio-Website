@@ -16,6 +16,7 @@ import { GithubIcon, LinkedinIcon, InstagramIcon } from "@/components/common/Ico
 import { PERSONAL_INFO } from "@/lib/data";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
 import { SectionBadge } from "@/components/common/SectionBadge";
+import { Tooltip } from "@/components/common/Tooltip";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const WEB3FORMS_ACCESS_KEY =
@@ -225,14 +226,20 @@ export function ContactSection() {
                   <span className="text-xs font-mono text-white truncate">
                     {PERSONAL_INFO.email}
                   </span>
-                  <motion.button
-                    whileTap={{ scale: 0.9 }}
-                    onClick={handleCopyEmail}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors shrink-0 cursor-pointer"
-                    title="Copy email"
+                  <Tooltip
+                    content={copied ? "Copied to clipboard!" : "Copy email address"}
+                    position="left"
+                    delay={100}
                   >
-                    {copied ? <CheckCircle2 size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                  </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={handleCopyEmail}
+                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors shrink-0 cursor-pointer"
+                      aria-label="Copy email"
+                    >
+                      {copied ? <CheckCircle2 size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                    </motion.button>
+                  </Tooltip>
                 </div>
               </div>
             </div>
@@ -243,47 +250,53 @@ export function ContactSection() {
                 Find Me On
               </span>
               <div className="flex flex-col gap-2.5 font-mono text-xs">
-                <motion.a
-                  whileHover={{ x: 3 }}
-                  href={PERSONAL_INFO.githubUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-blue-500/30 hover:bg-white/[0.05] flex items-center justify-between text-gray-300 hover:text-white transition-all"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <GithubIcon size={16} />
-                    <span>github.com/dheeraj-srma</span>
-                  </div>
-                  <span className="text-gray-500 text-[10px]">Code & Repos</span>
-                </motion.a>
+                <Tooltip content="github.com/dheeraj-srma • Source Code & Repositories" position="top" delay={150} className="w-full">
+                  <motion.a
+                    whileHover={{ x: 3 }}
+                    href={PERSONAL_INFO.githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-blue-500/30 hover:bg-white/[0.05] flex items-center justify-between text-gray-300 hover:text-white transition-all"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <GithubIcon size={16} />
+                      <span>github.com/dheeraj-srma</span>
+                    </div>
+                    <span className="text-gray-500 text-[10px]">Code & Repos</span>
+                  </motion.a>
+                </Tooltip>
 
-                <motion.a
-                  whileHover={{ x: 3 }}
-                  href={PERSONAL_INFO.linkedinUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-blue-500/30 hover:bg-white/[0.05] flex items-center justify-between text-gray-300 hover:text-white transition-all"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <LinkedinIcon size={16} />
-                    <span>Dheeraj Sharma</span>
-                  </div>
-                  <span className="text-gray-500 text-[10px]">Network</span>
-                </motion.a>
+                <Tooltip content="linkedin.com/in/dheerajsharma0025 • Professional Network" position="top" delay={150} className="w-full">
+                  <motion.a
+                    whileHover={{ x: 3 }}
+                    href={PERSONAL_INFO.linkedinUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-blue-500/30 hover:bg-white/[0.05] flex items-center justify-between text-gray-300 hover:text-white transition-all"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <LinkedinIcon size={16} />
+                      <span>Dheeraj Sharma</span>
+                    </div>
+                    <span className="text-gray-500 text-[10px]">Network</span>
+                  </motion.a>
+                </Tooltip>
 
-                <motion.a
-                  whileHover={{ x: 3 }}
-                  href={PERSONAL_INFO.instagramUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-pink-500/30 hover:bg-white/[0.05] flex items-center justify-between text-gray-300 hover:text-white transition-all"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <InstagramIcon size={16} />
-                    <span>@srma_g_ka_beta</span>
-                  </div>
-                  <span className="text-gray-500 text-[10px]">Personal</span>
-                </motion.a>
+                <Tooltip content="@srma_g_ka_beta • Personal Moments & Creative" position="top" delay={150} className="w-full">
+                  <motion.a
+                    whileHover={{ x: 3 }}
+                    href={PERSONAL_INFO.instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full p-3.5 rounded-xl bg-white/[0.02] border border-white/10 hover:border-pink-500/30 hover:bg-white/[0.05] flex items-center justify-between text-gray-300 hover:text-white transition-all"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <InstagramIcon size={16} />
+                      <span>@srma_g_ka_beta</span>
+                    </div>
+                    <span className="text-gray-500 text-[10px]">Personal</span>
+                  </motion.a>
+                </Tooltip>
               </div>
             </div>
           </SpotlightCard>

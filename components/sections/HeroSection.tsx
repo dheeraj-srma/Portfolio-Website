@@ -6,6 +6,7 @@ import { ArrowUpRight, Terminal } from "lucide-react";
 import { GithubIcon } from "@/components/common/Icons";
 import { PERSONAL_INFO } from "@/lib/data";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { Tooltip } from "@/components/common/Tooltip";
 
 export function HeroSection() {
   const [roleIndex, setRoleIndex] = useState(0);
@@ -122,25 +123,27 @@ export function HeroSection() {
               }}
               className="relative shrink-0 overflow-visible flex items-center justify-start"
             >
-              <motion.a
-                href={PERSONAL_INFO.githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ scale: avatarScale, y: avatarY }}
-                className="relative group shrink-0 block cursor-pointer"
-                title="Visit @dheeraj-srma on GitHub"
-              >
-                <div className="absolute -inset-1 bg-gradient-to-tr from-blue-500 via-purple-500 to-emerald-400 rounded-full blur-[4px] opacity-70 group-hover:opacity-100 transition duration-300" />
-                <img
-                  src={PERSONAL_INFO.avatarUrl}
-                  alt={PERSONAL_INFO.name}
-                  className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover border-2 border-white/20 shadow-2xl group-hover:scale-105 transition-transform"
-                />
-                <span
-                  className="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-emerald-500 border-2 border-[#090D16]"
-                  title="Active"
-                />
-              </motion.a>
+              <Tooltip content="Visit @dheeraj-srma on GitHub" position="right" delay={150}>
+                <motion.a
+                  href={PERSONAL_INFO.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ scale: avatarScale, y: avatarY }}
+                  className="relative group shrink-0 block cursor-pointer"
+                  aria-label="Visit @dheeraj-srma on GitHub"
+                >
+                  <div className="absolute -inset-1 bg-gradient-to-tr from-blue-500 via-purple-500 to-emerald-400 rounded-full blur-[4px] opacity-70 group-hover:opacity-100 transition duration-300" />
+                  <img
+                    src={PERSONAL_INFO.avatarUrl}
+                    alt={PERSONAL_INFO.name}
+                    className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover border-2 border-white/20 shadow-2xl group-hover:scale-105 transition-transform"
+                  />
+                  <span
+                    className="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-emerald-500 border-2 border-[#090D16]"
+                    aria-label="Active status"
+                  />
+                </motion.a>
+              </Tooltip>
             </motion.div>
 
             {/* Name, Handle & Roles */}
@@ -213,17 +216,19 @@ export function HeroSection() {
               <span>What I'm Building Now</span>
             </motion.button>
 
-            <motion.a
-              whileHover={{ scale: 1.025 }}
-              whileTap={{ scale: 0.98 }}
-              href={PERSONAL_INFO.githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 text-gray-300 hover:text-white font-medium text-sm transition-colors"
-            >
-              <GithubIcon size={16} />
-              <span>GitHub</span>
-            </motion.a>
+            <Tooltip content="Explore code & repositories on GitHub" position="top" delay={150}>
+              <motion.a
+                whileHover={{ scale: 1.025 }}
+                whileTap={{ scale: 0.98 }}
+                href={PERSONAL_INFO.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 text-gray-300 hover:text-white font-medium text-sm transition-colors"
+              >
+                <GithubIcon size={16} />
+                <span>GitHub</span>
+              </motion.a>
+            </Tooltip>
           </motion.div>
         </div>
 
@@ -231,10 +236,12 @@ export function HeroSection() {
         <div className="lg:col-span-4 flex flex-col justify-between h-full space-y-6">
           {/* Synchronized Top Row */}
           <div className="h-8 flex items-center justify-between px-1">
-            <span className="text-xs font-mono uppercase tracking-widest text-emerald-400 font-semibold flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Runtime Telemetry
-            </span>
+            <Tooltip content="Live monitoring active" position="bottom" delay={150}>
+              <span className="text-xs font-mono uppercase tracking-widest text-emerald-400 font-semibold flex items-center gap-2 cursor-default">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Runtime Telemetry
+              </span>
+            </Tooltip>
             <span className="text-[11px] font-mono text-gray-500">Active Node</span>
           </div>
 

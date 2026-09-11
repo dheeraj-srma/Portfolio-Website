@@ -23,6 +23,7 @@ import {
   RotateCcw
 } from "lucide-react";
 import { GithubIcon } from "@/components/common/Icons";
+import { Tooltip } from "@/components/common/Tooltip";
 import { ProjectData } from "@/lib/data";
 
 interface ProjectModalProps {
@@ -151,29 +152,35 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
 
             {/* Actions */}
             <div className="flex items-center gap-2">
-              <a
-                href={project.githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                title="View on GitHub"
-              >
-                <GithubIcon size={16} />
-              </a>
-              <button
-                onClick={() => setIsFullscreen(!isFullscreen)}
-                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors hidden sm:inline-flex"
-                title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-              >
-                {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-              </button>
-              <button
-                onClick={onClose}
-                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                title="Close"
-              >
-                <X size={18} />
-              </button>
+              <Tooltip content="View Repository on GitHub" position="bottom" delay={120}>
+                <a
+                  href={project.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                  aria-label="View on GitHub"
+                >
+                  <GithubIcon size={16} />
+                </a>
+              </Tooltip>
+              <Tooltip content={isFullscreen ? "Exit Fullscreen" : "Fullscreen"} position="bottom" delay={120}>
+                <button
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors hidden sm:inline-flex cursor-pointer"
+                  aria-label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                >
+                  {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                </button>
+              </Tooltip>
+              <Tooltip content="Close (Esc)" position="bottom" delay={120}>
+                <button
+                  onClick={onClose}
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X size={18} />
+                </button>
+              </Tooltip>
             </div>
           </div>
 
@@ -392,18 +399,20 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
                               <p className="text-[11px] font-mono text-gray-400">Multimodal Event Loop · Python Speech & Vision Engine</p>
                             </div>
                           </div>
-                          <button
-                            onClick={() =>
-                              setAuraLogs([
-                                "AURA Core v2.4 reset.",
-                                "Awaiting voice or keyboard instruction..."
-                              ])
-                            }
-                            className="p-1.5 rounded text-gray-400 hover:text-white"
-                            title="Clear Logs"
-                          >
-                            <RotateCcw size={14} />
-                          </button>
+                          <Tooltip content="Clear Console Logs" position="left" delay={120}>
+                            <button
+                              onClick={() =>
+                                setAuraLogs([
+                                  "AURA Core v2.4 reset.",
+                                  "Awaiting voice or keyboard instruction..."
+                                ])
+                              }
+                              className="p-1.5 rounded text-gray-400 hover:text-white cursor-pointer"
+                              aria-label="Clear Logs"
+                            >
+                              <RotateCcw size={14} />
+                            </button>
+                          </Tooltip>
                         </div>
 
                         {/* Terminal Logs Output */}

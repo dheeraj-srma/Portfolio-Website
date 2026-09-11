@@ -18,6 +18,7 @@ import { PROJECTS, ProjectData } from "@/lib/data";
 import { SpotlightCard } from "@/components/common/SpotlightCard";
 import { ProjectModal } from "@/components/common/ProjectModal";
 import { SectionBadge } from "@/components/common/SectionBadge";
+import { Tooltip } from "@/components/common/Tooltip";
 
 export function ProjectsSection() {
   const [activeFilter, setActiveFilter] = useState<string>("all");
@@ -180,17 +181,19 @@ export function ProjectsSection() {
                     <span>Live Preview & Story</span>
                   </motion.button>
 
-                  <motion.a
-                    whileHover={{ scale: 1.08 }}
-                    whileTap={{ scale: 0.94 }}
-                    href={project.githubUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 transition-colors"
-                    title="View GitHub Repository"
-                  >
-                    <GithubIcon size={14} />
-                  </motion.a>
+                  <Tooltip content="View GitHub Repository" position="top" delay={120}>
+                    <motion.a
+                      whileHover={{ scale: 1.08 }}
+                      whileTap={{ scale: 0.94 }}
+                      href={project.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 transition-colors"
+                      aria-label="View GitHub Repository"
+                    >
+                      <GithubIcon size={14} />
+                    </motion.a>
+                  </Tooltip>
                 </div>
               </SpotlightCard>
             </motion.div>

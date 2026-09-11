@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useInView } from "framer-motion";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
@@ -10,6 +10,7 @@ export interface SectionBadgeProps {
   className?: string;
   color?: "blue" | "purple" | "emerald" | "amber" | "pink";
   delay?: number; // delay in ms before entrance animation starts
+  sectionId?: string; // Optional explicit section ID (otherwise inferred from parent <section id="...">)
 }
 
 const COLOR_CLASSES: Record<string, string> = {
@@ -26,16 +27,73 @@ export function SectionBadge({
   className,
   color = "blue",
   delay = 0,
+  sectionId,
 }: SectionBadgeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(containerRef, { once: true, amount: 0.1 });
+  // Track in-view state with repeatable triggering
+  const isInView = useInView(containerRef, { once: false, amount: 0.3 });
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const [displayedLength, setDisplayedLength] = useState(0);
   const [showCursor, setShowCursor] = useState(false);
   const [hasPopped, setHasPopped] = useState(false);
 
-  // Reduced motion: show full text immediately without delays
+  const popTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const typingStartTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const cursorFadeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const wasInViewRef = useRef(false);
+
+  // Core animation orchestrator: resets and types out fresh
+  const runAnimation = useCallback(
+    (initialDelay: number = 0) => {
+      if (prefersReducedMotion) {
+        setDisplayedLength(text.length);
+        setShowCursor(false);
+        setHasPopped(true);
+        return;
+      }
+
+      // Clear any pending timers
+      if (popTimerRef.current) clearTimeout(popTimerRef.current);
+      if (typingStartTimerRef.current) clearTimeout(typingStartTimerRef.current);
+      if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+      if (cursorFadeTimerRef.current) clearTimeout(cursorFadeTimerRef.current);
+
+      // Clean reset
+      setDisplayedLength(0);
+      setShowCursor(false);
+      setHasPopped(false);
+
+      // Pop the icon in after initial delay
+      popTimerRef.current = setTimeout(() => {
+        setHasPopped(true);
+      }, initialDelay);
+
+      // Start typing letters at command shell cadence (~32ms per character)
+      typingStartTimerRef.current = setTimeout(() => {
+        setShowCursor(true);
+
+        let currentLen = 0;
+        typingIntervalRef.current = setInterval(() => {
+          currentLen += 1;
+          setDisplayedLength(currentLen);
+
+          if (currentLen >= text.length) {
+            if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+
+            // Cursor blinks for 1.2s post-typing then smoothly fades
+            cursorFadeTimerRef.current = setTimeout(() => {
+              setShowCursor(false);
+            }, 1200);
+          }
+        }, 32);
+      }, initialDelay + 220);
+    },
+    [text, prefersReducedMotion]
+  );
+
+  // Reduced motion: show full text immediately
   useEffect(() => {
     if (prefersReducedMotion) {
       setDisplayedLength(text.length);
@@ -44,47 +102,52 @@ export function SectionBadge({
     }
   }, [prefersReducedMotion, text.length]);
 
-  // Command shell typewriter orchestrator
+  // Viewport scroll entry / exit detection
   useEffect(() => {
-    if (prefersReducedMotion || !isInView) return;
+    if (prefersReducedMotion) return;
 
-    let popTimer: NodeJS.Timeout;
-    let typingStartTimer: NodeJS.Timeout;
-    let typingInterval: NodeJS.Timeout;
-    let cursorFadeTimer: NodeJS.Timeout;
+    if (isInView && !wasInViewRef.current) {
+      wasInViewRef.current = true;
+      runAnimation(delay);
+    } else if (!isInView && wasInViewRef.current) {
+      wasInViewRef.current = false;
+      // Reset when scrolled out of view so scrolling back triggers cleanly
+      setDisplayedLength(0);
+      setShowCursor(false);
+      setHasPopped(false);
+    }
+  }, [isInView, delay, runAnimation, prefersReducedMotion]);
 
-    // Pop the icon in after initial delay
-    popTimer = setTimeout(() => {
-      setHasPopped(true);
-    }, delay);
+  // Navbar Button Click Explorer: Re-trigger badge whenever its section is navigated to
+  useEffect(() => {
+    if (prefersReducedMotion) return;
 
-    // Start typing letters at command shell cadence (~34ms)
-    typingStartTimer = setTimeout(() => {
-      setShowCursor(true);
+    const handleSectionNavigate = (e: Event) => {
+      const customEvent = e as CustomEvent<{ sectionId: string }>;
+      const targetId = customEvent.detail?.sectionId;
+      const mySectionId = sectionId || containerRef.current?.closest("section")?.id;
 
-      let currentLen = 0;
-      typingInterval = setInterval(() => {
-        currentLen += 1;
-        setDisplayedLength(currentLen);
-
-        if (currentLen >= text.length) {
-          clearInterval(typingInterval);
-
-          // Cursor blinks for 1.2s post-typing then smoothly fades
-          cursorFadeTimer = setTimeout(() => {
-            setShowCursor(false);
-          }, 1200);
-        }
-      }, 34);
-    }, delay + 250);
-
-    return () => {
-      clearTimeout(popTimer);
-      clearTimeout(typingStartTimer);
-      clearInterval(typingInterval);
-      clearTimeout(cursorFadeTimer);
+      if (targetId && mySectionId && targetId === mySectionId) {
+        // Smooth scroll takes ~200-350ms to arrive. Trigger badge entrance right on arrival!
+        runAnimation(250);
+      }
     };
-  }, [isInView, delay, text, prefersReducedMotion]);
+
+    window.addEventListener("portfolio:section-navigate", handleSectionNavigate);
+    return () => {
+      window.removeEventListener("portfolio:section-navigate", handleSectionNavigate);
+    };
+  }, [sectionId, runAnimation, prefersReducedMotion]);
+
+  // Clean up all timers on unmount
+  useEffect(() => {
+    return () => {
+      if (popTimerRef.current) clearTimeout(popTimerRef.current);
+      if (typingStartTimerRef.current) clearTimeout(typingStartTimerRef.current);
+      if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+      if (cursorFadeTimerRef.current) clearTimeout(cursorFadeTimerRef.current);
+    };
+  }, []);
 
   const colorClass = className || COLOR_CLASSES[color] || COLOR_CLASSES.blue;
 
@@ -92,8 +155,7 @@ export function SectionBadge({
     <motion.div
       ref={containerRef}
       initial={prefersReducedMotion ? false : { opacity: 0, y: 15 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0.85, y: 0 }}
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.3 }}
       className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-mono uppercase tracking-widest select-none transition-all duration-300 ${colorClass}`}
@@ -101,9 +163,9 @@ export function SectionBadge({
       aria-label={text}
     >
       {/* 
-        The Normal Icon:
-        - Pops up cleanly with a spring when scrolled into view
-        - Remains permanently visible as a normal, clean icon (no post-loading jitter/pulse)
+        The Icon:
+        - Pops up cleanly with a spring when scrolled or navigated into view
+        - Remains permanently visible with zero post-animation jitter
       */}
       <motion.span
         className="inline-flex items-center justify-center shrink-0"
