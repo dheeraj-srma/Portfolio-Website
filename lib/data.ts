@@ -38,7 +38,7 @@ export const PERSONAL_INFO = {
   githubUrl: "https://github.com/dheeraj-srma",
   linkedinUrl: "https://www.linkedin.com/in/dheerajsharma0025/",
   instagramUrl: "https://www.instagram.com/srma_g_ka_beta/",
-  email: "dheerajkauhsik136@gmail.com",
+  email: "dheerajkaushik136@gmail.com",
   avatarUrl: "https://github.com/dheeraj-srma.png",
   bio: "Engineering student with a deep fascination for artificial intelligence, mathematics, physics, space, and systems engineering. I learn by going past the surface: understanding mathematical mechanics rather than just importing libraries, and building complete, working software from the database layer to the user interface.",
   subBio: "From machine-learning experiments and computer-vision pipelines to production business software and real-time data tools, I turn ideas into functioning systems.",

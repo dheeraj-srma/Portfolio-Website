@@ -24,7 +24,6 @@ export function ContactSection() {
     name: "",
     email: "",
     message: "",
-    botcheck: "",
   });
 
   const [touched, setTouched] = useState({
@@ -36,10 +35,9 @@ export function ContactSection() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [devModeNotice, setDevModeNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Field validation checks
+  // Field validation checks (Barrier rules)
   const nameError =
     touched.name && !formState.name.trim()
       ? "Name is required."
@@ -51,7 +49,7 @@ export function ContactSection() {
     touched.email && !formState.email.trim()
       ? "Email address is required."
       : touched.email && !EMAIL_REGEX.test(formState.email.trim())
-      ? "Please enter a valid email (e.g. name@domain.com)."
+      ? "Please enter a valid email address (e.g. name@domain.com)."
       : null;
 
   const messageError =
@@ -79,62 +77,48 @@ export function ContactSection() {
   const handleReset = () => {
     setSubmitted(false);
     setErrorMessage(null);
-    setDevModeNotice(null);
-    setFormState({ name: "", email: "", message: "", botcheck: "" });
+    setFormState({ name: "", email: "", message: "" });
     setTouched({ name: false, email: false, message: false });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // Trigger touched on all fields to highlight any errors
     setTouched({ name: true, email: true, message: true });
     setErrorMessage(null);
-    setDevModeNotice(null);
 
-    // Strict client-side barrier: Reject without name, email, or message
-    if (!formState.name.trim() || !formState.email.trim() || !formState.message.trim()) {
-      setErrorMessage("Barrier Check: Name, Email, and Message are all required before sending.");
+    // Strict frontend barrier: Reject immediately without Name, Email, or Message
+    const cleanName = formState.name.trim();
+    const cleanEmail = formState.email.trim();
+    const cleanMessage = formState.message.trim();
+
+    if (!cleanName || !cleanEmail || !cleanMessage) {
+      const missing: string[] = [];
+      if (!cleanName) missing.push("Name");
+      if (!cleanEmail) missing.push("Email");
+      if (!cleanMessage) missing.push("Message");
+
+      setErrorMessage(`Barrier Check: ${missing.join(", ")} must be filled before sending.`);
       return;
     }
 
-    if (!EMAIL_REGEX.test(formState.email.trim())) {
-      setErrorMessage("Please enter a valid email address.");
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      setErrorMessage("Please enter a valid email address format (e.g. alex@example.com).");
       return;
     }
 
-    if (formState.message.trim().length < 5) {
-      setErrorMessage("Please enter a message with at least 5 characters.");
+    if (cleanMessage.length < 5) {
+      setErrorMessage("Please enter a message of at least 5 characters.");
       return;
     }
 
     setLoading(true);
 
-    try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formState.name.trim(),
-          email: formState.email.trim(),
-          message: formState.message.trim(),
-          botcheck: formState.botcheck,
-        }),
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to dispatch email. Please try again.");
-      }
-
-      // Success
+    // Smooth tactile transition & mailto dispatch
+    setTimeout(() => {
+      setLoading(false);
       setSubmitted(true);
-      if (data.devMode) {
-        setDevModeNotice(data.message);
-      }
 
       // Trigger celebratory confetti
       try {
@@ -145,15 +129,16 @@ export function ContactSection() {
           colors: ["#3b82f6", "#60a5fa", "#93c5fd", "#ffffff"],
         });
       } catch {
-        // Confetti fallback safely ignored
+        // Safe fallback
       }
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "An unexpected network error occurred.";
-      setErrorMessage(message);
-    } finally {
-      setLoading(false);
-    }
+
+      // Open mail client with pre-filled subject and structured body
+      const subject = encodeURIComponent(`Message from ${cleanName} via Portfolio`);
+      const body = encodeURIComponent(
+        `${cleanMessage}\n\n---\nSender: ${cleanName}\nReply to: ${cleanEmail}`
+      );
+      window.location.href = `mailto:${PERSONAL_INFO.email}?subject=${subject}&body=${body}`;
+    }, 600);
   };
 
   return (
@@ -305,18 +290,12 @@ export function ContactSection() {
                     </div>
                     <div>
                       <h3 className="text-2xl font-bold text-white tracking-tight">
-                        Message Dispatched!
+                        Dispatched to Mail Client!
                       </h3>
                       <p className="text-sm text-gray-400 font-light mt-1.5 leading-relaxed">
-                        Thank you, <span className="text-white font-medium">{formState.name}</span>. Your note has been delivered directly to my inbox. I'll review and reply to <span className="text-blue-400 font-mono text-xs">{formState.email}</span> soon.
+                        Thank you, <span className="text-white font-medium">{formState.name}</span>. Your mail client was opened with your message ready to send directly to <span className="text-blue-400 font-mono text-xs">{PERSONAL_INFO.email}</span>.
                       </p>
                     </div>
-
-                    {devModeNotice && (
-                      <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs font-mono text-blue-300">
-                        ℹ️ {devModeNotice}
-                      </div>
-                    )}
                   </div>
 
                   <motion.button
@@ -330,7 +309,7 @@ export function ContactSection() {
                   </motion.button>
                 </motion.div>
               ) : (
-                /* Interactive Form */
+                /* Interactive Form with Frontend Barrier */
                 <form
                   key="contact-form"
                   onSubmit={handleSubmit}
@@ -368,18 +347,6 @@ export function ContactSection() {
                       </motion.div>
                     )}
                   </AnimatePresence>
-
-                  {/* Honeypot Field (Invisible to Humans, Traps Spam Bots) */}
-                  <input
-                    type="text"
-                    name="botcheck"
-                    value={formState.botcheck}
-                    onChange={(e) => setFormState({ ...formState, botcheck: e.target.value })}
-                    tabIndex={-1}
-                    autoComplete="off"
-                    aria-hidden="true"
-                    style={{ position: "absolute", left: "-9999px", opacity: 0 }}
-                  />
 
                   <div className="space-y-4">
                     {/* Name Input with Barrier Check */}
@@ -484,7 +451,7 @@ export function ContactSection() {
                     {loading ? (
                       <>
                         <Loader2 size={16} className="animate-spin" />
-                        <span>Dispatching Transmission...</span>
+                        <span>Preparing Message...</span>
                       </>
                     ) : (
                       <>
