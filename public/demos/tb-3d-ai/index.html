@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TB_3D_AI — Pulmonary Abnormality & Lesion Segmentation Medical Telemetry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace, sans-serif;
+      background: #06080d;
+      color: #e2e8f0;
+      padding: 16px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-badge {
+      background: linear-gradient(135deg, #f43f5e, #8b5cf6);
+      color: #fff;
+      font-weight: 800;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      font-family: monospace;
+    }
+    .brand-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .brand-sub {
+      font-size: 10px;
+      color: #94a3b8;
+      font-family: monospace;
+    }
+    .status-beacon {
+      font-size: 10px;
+      font-family: monospace;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(56,189,248,0.1);
+      border: 1px solid rgba(56,189,248,0.25);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .dot {
+      width: 6px;
+      height: 6px;
+      background: #38bdf8;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #38bdf8;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 16px;
+    }
+    @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    .viewport-box {
+      background: #0a0d14;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .viewport-header {
+      padding: 8px 14px;
+      background: #0f131d;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: monospace;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    .radiograph-stage {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #020408;
+      overflow: hidden;
+    }
+    .scan-reticle {
+      position: absolute;
+      inset: 20px;
+      border: 1px dashed rgba(56,189,248,0.2);
+      pointer-events: none;
+    }
+    .reticle-corner {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #38bdf8;
+    }
+    .rc-tl { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+    .rc-tr { top: -1px; right: -1px; border-left: none; border-bottom: none; }
+    .rc-bl { bottom: -1px; left: -1px; border-right: none; border-top: none; }
+    .rc-br { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+    .telemetry-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .control-card {
+      background: #0a0d14;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: monospace;
+    }
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 11px;
+      font-family: monospace;
+    }
+    .switch-btn {
+      background: #1e293b;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #94a3b8;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      cursor: pointer;
+      font-family: monospace;
+      transition: all 0.2s;
+    }
+    .switch-btn.active {
+      background: rgba(244,63,94,0.25);
+      border-color: #f43f5e;
+      color: #fda4af;
+    }
+    .switch-btn.active.unet {
+      background: rgba(56,189,248,0.25);
+      border-color: #38bdf8;
+      color: #bae6fd;
+    }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .metric-cell {
+      background: #0f131d;
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-family: monospace;
+    }
+    .metric-label {
+      font-size: 9px;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .metric-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .slider-row {
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 10px;
+      color: #94a3b8;
+    }
+    .slider-row input {
+      width: 100%;
+      margin-top: 4px;
+      accent-color: #f43f5e;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="logo-badge">TB_3D_AI</span>
+      <div>
+        <div class="brand-title">Pulmonary Radiograph & 3D Lesion Segmentation</div>
+        <div class="brand-sub">TBX11K Clinical Inference Pipeline · U-Net + Grad-CAM</div>
+      </div>
+    </div>
+    <div class="status-beacon">
+      <span class="dot"></span>
+      <span>INFERENCE READY (42ms)</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="viewport-box">
+      <div class="viewport-header">
+        <span>PATIENT: TBX-08492 // AP VIEW (512x512)</span>
+        <span style="color: #f43f5e;">FLAG: PATHOLOGY DETECTED (94.6%)</span>
+      </div>
+
+      <div class="radiograph-stage" id="stage">
+        <!-- SVG Radiograph Anatomy Representation -->
+        <svg id="xraySvg" width="340" height="340" viewBox="0 0 340 340" style="transition: filter 0.3s;">
+          <defs>
+            <radialGradient id="lungGradient" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#2a3342" stop-opacity="0.9" />
+              <stop offset="70%" stop-color="#121722" stop-opacity="0.95" />
+              <stop offset="100%" stop-color="#05070a" stop-opacity="1" />
+            </radialGradient>
+            <radialGradient id="gradcamGlow" cx="42%" cy="38%" r="28%">
+              <stop offset="0%" stop-color="#ff0055" stop-opacity="0.85" />
+              <stop offset="45%" stop-color="#ffaa00" stop-opacity="0.65" />
+              <stop offset="75%" stop-color="#00ffff" stop-opacity="0.25" />
+              <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+
+          <!-- Thoracic Cage Background -->
+          <path d="M 60,60 C 90,20 250,20 280,60 C 310,130 300,280 270,310 C 230,330 110,330 70,310 C 40,280 30,130 60,60 Z" fill="#0c1017" stroke="#1f2937" stroke-width="2" />
+
+          <!-- Left & Right Lung Lobes -->
+          <!-- Right Lung (Anatomical Right, on left side of viewer) -->
+          <path d="M 80,80 C 110,70 145,85 148,120 C 150,170 152,240 142,280 C 120,290 85,280 75,250 C 65,190 65,120 80,80 Z" fill="url(#lungGradient)" stroke="#374151" stroke-width="1.5" />
+          <!-- Left Lung (Anatomical Left, on right side of viewer) -->
+          <path d="M 260,80 C 230,70 195,85 192,120 C 190,170 188,230 178,255 C 185,275 220,290 245,280 C 265,240 275,170 260,80 Z" fill="url(#lungGradient)" stroke="#374151" stroke-width="1.5" />
+
+          <!-- Spine & Rib Cage Shadows -->
+          <line x1="170" y1="40" x2="170" y2="310" stroke="#374151" stroke-width="8" stroke-dasharray="6 4" opacity="0.7" />
+          <path d="M 100,110 Q 170,140 240,110" stroke="#4b5563" stroke-width="3" fill="none" opacity="0.35" />
+          <path d="M 90,145 Q 170,180 250,145" stroke="#4b5563" stroke-width="3" fill="none" opacity="0.35" />
+          <path d="M 85,185 Q 170,225 255,185" stroke="#4b5563" stroke-width="3.5" fill="none" opacity="0.35" />
+          <path d="M 80,225 Q 170,270 260,225" stroke="#4b5563" stroke-width="3.5" fill="none" opacity="0.35" />
+
+          <!-- Heart Silhouette -->
+          <path d="M 170,160 Q 205,190 190,245 Q 165,255 155,220 Z" fill="#111827" opacity="0.8" />
+
+          <!-- Grad-CAM Attention Heatmap Layer -->
+          <circle id="gradcamLayer" cx="120" cy="140" r="54" fill="url(#gradcamGlow)" style="display: block; mix-blend-mode: screen;" />
+
+          <!-- U-Net Semantic Lesion Segmentation Mask -->
+          <g id="unetLayer" style="display: block;">
+            <path d="M 105,122 C 120,118 138,126 136,145 C 134,162 118,168 108,162 C 98,155 96,132 105,122 Z"
+              fill="#06b6d4" fill-opacity="0.35" stroke="#22d3ee" stroke-width="2" stroke-dasharray="3 2" />
+            <circle cx="118" cy="142" r="3" fill="#22d3ee" />
+            <text x="144" y="138" font-family="monospace" font-size="9" fill="#22d3ee">LESION 01 (TB)</text>
+          </g>
+        </svg>
+
+        <div class="scan-reticle">
+          <div class="reticle-corner rc-tl"></div>
+          <div class="reticle-corner rc-tr"></div>
+          <div class="reticle-corner rc-bl"></div>
+          <div class="reticle-corner rc-br"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="telemetry-sidebar">
+      <div class="control-card">
+        <div class="card-title">
+          <span>PIPELINE LAYERS</span>
+          <span style="font-size: 10px; color: #38bdf8;">CUDA:ON</span>
+        </div>
+
+        <div class="toggle-row">
+          <span>CLAHE Contrast:</span>
+          <button class="switch-btn" id="btnClahe">OFF</button>
+        </div>
+
+        <div class="toggle-row">
+          <span>Grad-CAM Activation:</span>
+          <button class="switch-btn active" id="btnGradcam">ON</button>
+        </div>
+
+        <div class="toggle-row">
+          <span>U-Net Mask (TB):</span>
+          <button class="switch-btn active unet" id="btnUnet">ON</button>
+        </div>
+
+        <div class="slider-row">
+          <div style="display: flex; justify-content: space-between;">
+            <span>Confidence Threshold:</span>
+            <span id="threshLabel">72%</span>
+          </div>
+          <input type="range" id="threshSlider" min="40" max="95" value="72" />
+        </div>
+      </div>
+
+      <div class="control-card">
+        <div class="card-title">
+          <span>CLINICAL METRICS</span>
+          <span style="font-size: 10px; color: #4ade80;">TBX11K</span>
+        </div>
+
+        <div class="metric-grid">
+          <div class="metric-cell">
+            <div class="metric-label">TB Probability</div>
+            <div class="metric-val" style="color: #f43f5e;" id="probVal">94.6%</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-label">Dice Score</div>
+            <div class="metric-val" style="color: #38bdf8;">0.882</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-label">Lesion Volume</div>
+            <div class="metric-val" style="color: #fbbf24;">18.4 cm³</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-label">Voxel Slices</div>
+            <div class="metric-val" style="color: #a78bfa;">64 Z-Planes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let claheOn = false;
+    let gradcamOn = true;
+    let unetOn = true;
+
+    const xray = document.getElementById("xraySvg");
+    const gradcam = document.getElementById("gradcamLayer");
+    const unet = document.getElementById("unetLayer");
+
+    document.getElementById("btnClahe").addEventListener("click", function() {
+      claheOn = !claheOn;
+      this.classList.toggle("active", claheOn);
+      this.textContent = claheOn ? "ON" : "OFF";
+      xray.style.filter = claheOn ? "contrast(1.4) brightness(1.15)" : "none";
+    });
+
+    document.getElementById("btnGradcam").addEventListener("click", function() {
+      gradcamOn = !gradcamOn;
+      this.classList.toggle("active", gradcamOn);
+      this.textContent = gradcamOn ? "ON" : "OFF";
+      gradcam.style.display = gradcamOn ? "block" : "none";
+    });
+
+    document.getElementById("btnUnet").addEventListener("click", function() {
+      unetOn = !unetOn;
+      this.classList.toggle("active", unetOn);
+      this.textContent = unetOn ? "ON" : "OFF";
+      unet.style.display = unetOn ? "block" : "none";
+    });
+
+    document.getElementById("threshSlider").addEventListener("input", function(e) {
+      const val = e.target.value;
+      document.getElementById("threshLabel").textContent = `${val}%`;
+      const adjustedProb = (92 + (val - 70) * 0.1).toFixed(1);
+      document.getElementById("probVal").textContent = `${adjustedProb}%`;
+      gradcam.style.opacity = (val / 100).toFixed(2);
+    });
+  </script>
+</body>
+</html>

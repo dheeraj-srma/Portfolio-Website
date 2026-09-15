@@ -28,6 +28,7 @@ export interface ProjectData {
     details: string;
   };
   metrics?: { label: string; value: string }[];
+  demoSource?: string;
 }
 
 export const PERSONAL_INFO = {

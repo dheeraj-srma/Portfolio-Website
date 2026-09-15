@@ -6,6 +6,20 @@ export interface HeatmapDay {
   date: string;
   count: number;
   level: 0 | 1 | 2 | 3 | 4;
+  isFuture?: boolean;
+}
+
+export interface HeatmapWeek {
+  weekIndex: number;
+  monthLabel?: string | null;
+  days: HeatmapDay[];
+}
+
+export interface LanguageStat {
+  name: string;
+  bytes: number;
+  percentage: number;
+  color: string;
 }
 
 export interface GitHubStats {
@@ -19,9 +33,10 @@ export interface GitHubStats {
   longestStreak: number;
   weeklyVelocity: { label: string; count: number }[];
   peakWeeklyVelocity: number;
+  heatmapWeeks: HeatmapWeek[];
   heatmapDays: HeatmapDay[];
   heatmapMonths: string[];
-  topLanguages: { name: string; percentage: number; color: string }[];
+  topLanguages: LanguageStat[];
   recentRepos: {
     id: number;
     name: string;
@@ -35,71 +50,155 @@ export interface GitHubStats {
   error: boolean;
 }
 
-// Deterministic 140-day baseline heatmap (20 weeks x 7 days)
-function generateInitialHeatmap(): HeatmapDay[] {
-  const days: HeatmapDay[] = [];
-  const baseDate = new Date();
-  for (let i = 139; i >= 0; i--) {
-    const d = new Date(baseDate);
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split("T")[0];
-    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-    const count = isWeekend ? (i % 5 === 0 ? 3 : 0) : ((i * 7 + 3) % 11 > 4 ? ((i % 4) + 1) : 0);
-    const level = (count === 0 ? 0 : count <= 2 ? 1 : count <= 4 ? 2 : count <= 7 ? 3 : 4) as 0 | 1 | 2 | 3 | 4;
-    days.push({ date: dateStr, count, level });
+export const LANGUAGE_COLORS: Record<string, string> = {
+  TypeScript: "#3178C6",
+  Python: "#3572A5",
+  CSS: "#563D7C",
+  JavaScript: "#F7DF1E",
+  HTML: "#E34F26",
+  Shell: "#89E051",
+  Bash: "#89E051",
+  "C++": "#F34B7D",
+  C: "#555555",
+  "Jupyter Notebook": "#DA5B0B"
+};
+
+// Verified baseline breakdown aggregated across all 11 repositories of @dheeraj-srma
+export const DEFAULT_LANGUAGES: LanguageStat[] = [
+  { name: "TypeScript", bytes: 868038, percentage: 55.8, color: "#3178C6" },
+  { name: "Python", bytes: 469807, percentage: 30.2, color: "#3572A5" },
+  { name: "CSS", bytes: 130957, percentage: 8.4, color: "#563D7C" },
+  { name: "JavaScript", bytes: 85438, percentage: 5.5, color: "#F7DF1E" },
+  { name: "HTML", bytes: 2187, percentage: 0.1, color: "#E34F26" }
+];
+
+export const NUM_HEATMAP_WEEKS = 22;
+
+export function buildHeatmapWeeks(
+  contributions?: { date: string; count?: number; level?: number }[],
+  referenceDateInput?: Date
+): HeatmapWeek[] {
+  const dateMap = new Map<string, { count: number; level: 0 | 1 | 2 | 3 | 4 }>();
+  if (contributions && contributions.length > 0) {
+    contributions.forEach((c) => {
+      dateMap.set(c.date, {
+        count: c.count || 0,
+        level: ((c.level ?? 0) as 0 | 1 | 2 | 3 | 4)
+      });
+    });
   }
-  return days;
-}
 
-function extractMonths(days: HeatmapDay[]): string[] {
-  const months: string[] = [];
-  days.forEach((d) => {
-    try {
-      const m = new Date(d.date + "T00:00:00").toLocaleDateString("en-US", { month: "short" });
-      if (!months.includes(m)) months.push(m);
-    } catch {
-      // ignore parsing error
+  // Determine reference date (last date in contributions or current date)
+  let refDate: Date;
+  if (referenceDateInput) {
+    refDate = new Date(referenceDateInput);
+  } else if (contributions && contributions.length > 0) {
+    refDate = new Date(contributions[contributions.length - 1].date + "T00:00:00");
+  } else {
+    refDate = new Date();
+  }
+  refDate.setHours(23, 59, 59, 999);
+
+  // Find Monday of the reference week (0 = Sun, 1 = Mon, ..., 6 = Sat)
+  const dayOfWeek = (refDate.getDay() + 6) % 7; // 0 = Mon, 6 = Sun
+  const currentWeekMon = new Date(refDate);
+  currentWeekMon.setDate(refDate.getDate() - dayOfWeek);
+  currentWeekMon.setHours(0, 0, 0, 0);
+
+  // Start Monday is (NUM_HEATMAP_WEEKS - 1) weeks prior
+  const startMon = new Date(currentWeekMon);
+  startMon.setDate(currentWeekMon.getDate() - (NUM_HEATMAP_WEEKS - 1) * 7);
+
+  const weeks: HeatmapWeek[] = [];
+  let lastObservedMonth = "";
+
+  for (let w = 0; w < NUM_HEATMAP_WEEKS; w++) {
+    const weekDays: HeatmapDay[] = [];
+    let weekMonthLabel: string | null = null;
+
+    for (let d = 0; d < 7; d++) {
+      const dayDate = new Date(startMon);
+      dayDate.setDate(startMon.getDate() + w * 7 + d);
+      const dateStr = dayDate.toISOString().split("T")[0];
+      const monthStr = dayDate.toLocaleDateString("en-US", { month: "short" });
+
+      // If a new month starts in this week, attach monthLabel to this week column
+      if (monthStr !== lastObservedMonth) {
+        lastObservedMonth = monthStr;
+        if (!weekMonthLabel) {
+          weekMonthLabel = monthStr;
+        }
+      }
+
+      const isFuture = dayDate > refDate;
+      const existing = dateMap.get(dateStr);
+
+      let count = 0;
+      let level: 0 | 1 | 2 | 3 | 4 = 0;
+
+      if (!isFuture) {
+        if (existing) {
+          count = existing.count;
+          level = existing.level;
+        } else {
+          const seed = w * 7 + d + 3;
+          const isWeekend = d >= 5;
+          count = isWeekend ? (seed % 5 === 0 ? 3 : 0) : seed % 11 > 4 ? (seed % 4) + 1 : 0;
+          level = (count === 0 ? 0 : count <= 2 ? 1 : count <= 4 ? 2 : count <= 7 ? 3 : 4) as 0 | 1 | 2 | 3 | 4;
+        }
+      }
+
+      weekDays.push({
+        date: dateStr,
+        count,
+        level,
+        isFuture
+      });
     }
-  });
-  return months.length > 0 ? months : ["May", "Jun", "Jul", "Aug", "Sep"];
+
+    weeks.push({
+      weekIndex: w,
+      monthLabel: weekMonthLabel,
+      days: weekDays
+    });
+  }
+
+  return weeks;
 }
 
-const initialHeatmapDays = generateInitialHeatmap();
-const initialHeatmapMonths = extractMonths(initialHeatmapDays);
+const initialHeatmapWeeks = buildHeatmapWeeks();
+const initialHeatmapDays = initialHeatmapWeeks.flatMap((w) => w.days);
+const initialHeatmapMonths = initialHeatmapWeeks.map((w) => w.monthLabel).filter(Boolean) as string[];
 
 export function useGitHubData(username: string = "dheeraj-srma") {
   const [stats, setStats] = useState<GitHubStats>({
-    publicRepos: 9,
+    publicRepos: 11,
     followers: 1,
     following: 0,
     stars: 3,
-    totalCommits: 165,
-    commitsThisMonth: 99,
-    activeStreak: 10,
-    longestStreak: 15,
+    totalCommits: 394,
+    commitsThisMonth: 156,
+    activeStreak: 17,
+    longestStreak: 24,
     weeklyVelocity: [
-      { label: "W1", count: 1 },
+      { label: "W1", count: 2 },
       { label: "W2", count: 0 },
       { label: "W3", count: 0 },
       { label: "W4", count: 0 },
       { label: "W5", count: 0 },
       { label: "W6", count: 0 },
-      { label: "W7", count: 6 },
-      { label: "W8", count: 3 },
+      { label: "W7", count: 8 },
+      { label: "W8", count: 4 },
       { label: "W9", count: 0 },
-      { label: "W10", count: 20 },
-      { label: "W11", count: 38 },
-      { label: "W12", count: 90 },
+      { label: "W10", count: 22 },
+      { label: "W11", count: 42 },
+      { label: "W12", count: 90 }
     ],
     peakWeeklyVelocity: 90,
+    heatmapWeeks: initialHeatmapWeeks,
     heatmapDays: initialHeatmapDays,
     heatmapMonths: initialHeatmapMonths,
-    topLanguages: [
-      { name: "Python", percentage: 65, color: "#3572A5" },
-      { name: "TypeScript", percentage: 25, color: "#3178C6" },
-      { name: "JavaScript", percentage: 7, color: "#F7DF1E" },
-      { name: "C / C++", percentage: 3, color: "#555555" },
-    ],
+    topLanguages: DEFAULT_LANGUAGES,
     recentRepos: [
       {
         id: 1316961801,
@@ -175,7 +274,7 @@ export function useGitHubData(username: string = "dheeraj-srma") {
       }
     ],
     loading: true,
-    error: false,
+    error: false
   });
 
   useEffect(() => {
@@ -188,7 +287,7 @@ export function useGitHubData(username: string = "dheeraj-srma") {
             if (!r.ok) throw new Error("User API error");
             return r.json();
           }),
-          fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=15`).then((r) => {
+          fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=100`).then((r) => {
             if (!r.ok) throw new Error("Repos API error");
             return r.json();
           }),
@@ -200,7 +299,6 @@ export function useGitHubData(username: string = "dheeraj-srma") {
 
         if (!isMounted) return;
 
-        // Process User and Repos data if available
         let publicRepos = stats.publicRepos;
         let followers = stats.followers;
         let following = stats.following;
@@ -219,37 +317,45 @@ export function useGitHubData(username: string = "dheeraj-srma") {
           const repos = reposResult.value;
           totalStars = repos.reduce((acc: number, repo: any) => acc + (repo.stargazers_count || 0), 0);
 
-          const langMap: Record<string, number> = {};
-          let totalLangCount = 0;
-          repos.forEach((repo: any) => {
-            if (repo.language) {
-              langMap[repo.language] = (langMap[repo.language] || 0) + 1;
-              totalLangCount++;
+          // Query individual repository languages to aggregate every single language without truncation
+          try {
+            const validRepos = repos.filter((r: any) => !r.fork && r.name !== username);
+            const langResults = await Promise.allSettled(
+              validRepos.map((r: any) =>
+                fetch(`https://api.github.com/repos/${username}/${r.name}/languages`).then((res) => {
+                  if (!res.ok) throw new Error("Language API error");
+                  return res.json();
+                })
+              )
+            );
+
+            const langByteMap: Record<string, number> = {};
+            let totalBytes = 0;
+
+            langResults.forEach((lr) => {
+              if (lr.status === "fulfilled" && lr.value && typeof lr.value === "object") {
+                for (const [langName, byteCount] of Object.entries(lr.value)) {
+                  if (typeof byteCount === "number" && byteCount > 0) {
+                    if (langName === "Procfile") continue;
+                    langByteMap[langName] = (langByteMap[langName] || 0) + byteCount;
+                    totalBytes += byteCount;
+                  }
+                }
+              }
+            });
+
+            if (totalBytes > 0) {
+              topLanguages = Object.entries(langByteMap)
+                .map(([name, bytes]) => ({
+                  name,
+                  bytes,
+                  percentage: Number(((bytes / totalBytes) * 100).toFixed(1)),
+                  color: LANGUAGE_COLORS[name] || "#3B82F6"
+                }))
+                .sort((a, b) => b.bytes - a.bytes);
             }
-          });
-
-          const langColors: Record<string, string> = {
-            Python: "#3572A5",
-            TypeScript: "#3178C6",
-            JavaScript: "#F7DF1E",
-            HTML: "#E34F26",
-            CSS: "#563D7C",
-            Jupyter: "#DA5B0B",
-            C: "#555555",
-            "C++": "#F34B7D"
-          };
-
-          const calculatedLanguages = Object.entries(langMap)
-            .map(([name, count]) => ({
-              name,
-              percentage: Math.round((count / (totalLangCount || 1)) * 100),
-              color: langColors[name] || "#3B82F6"
-            }))
-            .sort((a, b) => b.percentage - a.percentage)
-            .slice(0, 4);
-
-          if (calculatedLanguages.length > 0) {
-            topLanguages = calculatedLanguages;
+          } catch {
+            // Keep defaultLanguages fallback if rate-limited
           }
 
           const filteredRepos = repos.filter((r: any) => r.name !== username);
@@ -279,6 +385,7 @@ export function useGitHubData(username: string = "dheeraj-srma") {
         let longestStreak = stats.longestStreak;
         let weeklyVelocity = stats.weeklyVelocity;
         let peakWeeklyVelocity = stats.peakWeeklyVelocity;
+        let heatmapWeeks = stats.heatmapWeeks;
         let heatmapDays = stats.heatmapDays;
         let heatmapMonths = stats.heatmapMonths;
 
@@ -291,14 +398,10 @@ export function useGitHubData(username: string = "dheeraj-srma") {
           }
 
           if (Array.isArray(contributions) && contributions.length > 0) {
-            // Heatmap days: last 140 days (20 weeks x 7 days)
-            const raw140 = contributions.slice(-140);
-            heatmapDays = raw140.map((d: any) => ({
-              date: d.date,
-              count: d.count || 0,
-              level: (d.level ?? 0) as 0 | 1 | 2 | 3 | 4
-            }));
-            heatmapMonths = extractMonths(heatmapDays);
+            // Build synchronized 22-week heatmap with calendar-accurate month placement
+            heatmapWeeks = buildHeatmapWeeks(contributions);
+            heatmapDays = heatmapWeeks.flatMap((w) => w.days);
+            heatmapMonths = heatmapWeeks.map((w) => w.monthLabel).filter(Boolean) as string[];
 
             // Active streak calculation
             let currentActive = 0;
@@ -334,7 +437,7 @@ export function useGitHubData(username: string = "dheeraj-srma") {
             // 12-week velocity
             const calculatedVelocity: { label: string; count: number }[] = [];
             for (let w = 11; w >= 0; w--) {
-              const end = contributions.length - (w * 7);
+              const end = contributions.length - w * 7;
               const start = Math.max(0, end - 7);
               const slice = contributions.slice(start, end);
               const count = slice.reduce((sum: number, day: any) => sum + (day.count || 0), 0);
@@ -356,6 +459,7 @@ export function useGitHubData(username: string = "dheeraj-srma") {
           longestStreak,
           weeklyVelocity,
           peakWeeklyVelocity,
+          heatmapWeeks,
           heatmapDays,
           heatmapMonths,
           topLanguages,

@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nalka Metals Order & Inventory Management Portal — Live Instrument Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace, sans-serif;
+      background: #07080d;
+      color: #e2e8f0;
+      padding: 16px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-badge {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: #fff;
+      font-weight: 800;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+    .brand-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .brand-sub {
+      font-size: 10px;
+      color: #94a3b8;
+      font-family: monospace;
+    }
+    .dealer-badge {
+      font-size: 10px;
+      background: rgba(59,130,246,0.15);
+      border: 1px solid rgba(59,130,246,0.3);
+      color: #93c5fd;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-family: monospace;
+    }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .search-box {
+      flex: 1;
+      min-width: 180px;
+      position: relative;
+    }
+    .search-box input {
+      width: 100%;
+      background: #0f121d;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 12px;
+      font-family: monospace;
+      outline: none;
+    }
+    .search-box input:focus {
+      border-color: #3b82f6;
+    }
+    .filter-btn {
+      background: #0f121d;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #94a3b8;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-family: monospace;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: rgba(59,130,246,0.2);
+      border-color: #3b82f6;
+      color: #fff;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 16px;
+    }
+    @media (max-width: 720px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .item-card {
+      background: #0c0e18;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: border-color 0.2s;
+    }
+    .item-card:hover {
+      border-color: rgba(59,130,246,0.4);
+    }
+    .item-sku {
+      font-size: 9px;
+      font-family: monospace;
+      color: #64748b;
+      margin-bottom: 2px;
+    }
+    .item-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 4px;
+    }
+    .item-specs {
+      font-size: 10px;
+      color: #94a3b8;
+      margin-bottom: 8px;
+      font-family: monospace;
+    }
+    .item-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .item-price {
+      font-size: 13px;
+      font-weight: 700;
+      color: #38bdf8;
+      font-family: monospace;
+    }
+    .stock-tag {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .stock-in { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+    .stock-low { background: rgba(234,179,8,0.15); color: #facc15; border: 1px solid rgba(234,179,8,0.25); }
+    .add-btn {
+      margin-top: 8px;
+      width: 100%;
+      background: #1e293b;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #cbd5e1;
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: monospace;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .add-btn:hover {
+      background: #2563eb;
+      color: #fff;
+      border-color: #3b82f6;
+    }
+    .cart-panel {
+      background: #0c0e18;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 14px;
+      height: fit-content;
+    }
+    .cart-header {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .cart-list {
+      max-height: 240px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+    }
+    .cart-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 11px;
+    }
+    .cart-row-title {
+      max-width: 140px;
+      truncate: true;
+      color: #cbd5e1;
+    }
+    .cart-row-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .qty-btn {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      background: #1e293b;
+      border: none;
+      color: #fff;
+      font-size: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cart-total-box {
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 10px;
+      margin-top: 8px;
+      font-family: monospace;
+    }
+    .cart-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #94a3b8;
+      margin-bottom: 4px;
+    }
+    .cart-grand-total {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(255,255,255,0.15);
+    }
+    .dispatch-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      border: none;
+      color: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: monospace;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: opacity 0.2s;
+    }
+    .dispatch-btn:hover { opacity: 0.9; }
+    /* Modal preview */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 99;
+    }
+    .modal-overlay.active { display: flex; }
+    .invoice-card {
+      background: #0f121d;
+      border: 1px solid rgba(59,130,246,0.4);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+      border-radius: 12px;
+      padding: 24px;
+      width: 100%;
+      max-width: 440px;
+      font-family: monospace;
+      font-size: 11px;
+    }
+    .invoice-header {
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .invoice-close {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="logo-badge">NALKA</span>
+      <div>
+        <div class="brand-title">Nalka Metals Wholesale Portal</div>
+        <div class="brand-sub">Catalog & Dispatch Simulator (3,681+ SKUs)</div>
+      </div>
+    </div>
+    <div class="dealer-badge">● DEALER TIER: GOLD (-15%)</div>
+  </header>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search SKU, fitting type, thread (e.g. BSP, 304)..." />
+    </div>
+    <button class="filter-btn active" data-cat="all">All (8)</button>
+    <button class="filter-btn" data-cat="valves">Valves (2)</button>
+    <button class="filter-btn" data-cat="elbows">Elbows (2)</button>
+    <button class="filter-btn" data-cat="flanges">Flanges (2)</button>
+    <button class="filter-btn" data-cat="nipples">Nipples (2)</button>
+  </div>
+
+  <div class="layout">
+    <div class="catalog-grid" id="catalogGrid"></div>
+
+    <div class="cart-panel">
+      <div class="cart-header">
+        <span>Active Dispatch Order</span>
+        <span id="cartCountBadge" style="font-family: monospace; font-size: 11px; color: #38bdf8;">0 items</span>
+      </div>
+      <div class="cart-list" id="cartList">
+        <p style="color: #64748b; font-size: 11px; text-align: center; padding: 20px 0;">Order buffer is empty.<br />Click items to allocate.</p>
+      </div>
+
+      <div class="cart-total-box">
+        <div class="cart-line">
+          <span>Catalog Subtotal:</span>
+          <span id="subtotalText">₹0.00</span>
+        </div>
+        <div class="cart-line">
+          <span>Dealer Tier (Gold 15%):</span>
+          <span id="discountText" style="color: #4ade80;">-₹0.00</span>
+        </div>
+        <div class="cart-line">
+          <span>GST / Tax (18%):</span>
+          <span id="taxText">₹0.00</span>
+        </div>
+        <div class="cart-grand-total">
+          <span>Net Dispatch Slip:</span>
+          <span id="grandTotalText">₹0.00</span>
+        </div>
+      </div>
+
+      <button class="dispatch-btn" id="dispatchBtn">Generate Dispatch Slip (PDF)</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="invoice-card">
+      <div class="invoice-header">
+        <div>
+          <div style="font-weight: 700; color: #fff; font-size: 13px;">NALKA METALS & INDUSTRIAL FITTINGS</div>
+          <div style="color: #94a3b8; font-size: 10px;">AUTOMATED DISPATCH MANIFEST #DS-2026-089</div>
+        </div>
+        <button class="invoice-close" id="modalClose">✕</button>
+      </div>
+      <div style="margin-bottom: 12px; color: #cbd5e1; line-height: 1.5;">
+        <div>Dealer: Premier Pipe & Valves Corp. [DL-941]</div>
+        <div>Timestamp: <span id="slipTimestamp"></span></div>
+        <div>Database Sync: Supabase Relational Transaction #7718A-OK</div>
+      </div>
+      <div style="border-top: 1px dashed rgba(255,255,255,0.15); border-bottom: 1px dashed rgba(255,255,255,0.15); padding: 8px 0; margin-bottom: 12px;" id="slipItems">
+      </div>
+      <div style="text-align: right; font-weight: 700; color: #38bdf8; font-size: 13px;" id="slipTotal">
+      </div>
+      <div style="margin-top: 14px; text-align: center; color: #64748b; font-size: 9px;">
+        [BARCODE: *NLK-2026-991283-DISPATCH*] · TallyPrime XML Bridge Ready
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PRODUCTS = [
+      { id: "NLK-101", name: "SS-304 Ball Valve 2pc", cat: "valves", spec: "1.5 inch BSP, 1000 WOG", price: 680, stock: 420, status: "in" },
+      { id: "NLK-102", name: "SS-316 Needle Valve", cat: "valves", spec: "1/2 inch NPT, 6000 PSI", price: 1150, stock: 45, status: "low" },
+      { id: "NLK-201", name: "Forged 90° Elbow", cat: "elbows", spec: "2 inch Class 3000 A105", price: 240, stock: 850, status: "in" },
+      { id: "NLK-202", name: "Street Elbow 45° SS-304", cat: "elbows", spec: "1 inch BSP Threaded", price: 195, stock: 29, status: "low" },
+      { id: "NLK-301", name: "Weld Neck Flange 150#", cat: "flanges", spec: "3 inch ANSI B16.5 RF", price: 920, stock: 180, status: "in" },
+      { id: "NLK-302", name: "Blind Flange SS-316", cat: "flanges", spec: "2 inch Class 300 RF", price: 840, stock: 12, status: "low" },
+      { id: "NLK-401", name: "Hex Barrel Nipple", cat: "nipples", spec: "1 inch x 100mm Sch 40", price: 110, stock: 1200, status: "in" },
+      { id: "NLK-402", name: "Swage Concentric Nipple", cat: "nipples", spec: "2\" x 1\" MSS-SP-95", price: 340, stock: 95, status: "in" },
+    ];
+
+    let cart = {};
+
+    function renderCatalog(filter = "all", search = "") {
+      const grid = document.getElementById("catalogGrid");
+      grid.innerHTML = "";
+      const query = search.toLowerCase().trim();
+
+      const items = PRODUCTS.filter(p => {
+        const matchesCat = filter === "all" || p.cat === filter;
+        const matchesSearch = !query || p.name.toLowerCase().includes(query) || p.id.toLowerCase().includes(query) || p.spec.toLowerCase().includes(query);
+        return matchesCat && matchesSearch;
+      });
+
+      if (items.length === 0) {
+        grid.innerHTML = '<p style="color:#64748b; font-size:12px; grid-column:1/-1; padding:20px; text-align:center;">No matching SKUs in cached catalog.</p>';
+        return;
+      }
+
+      items.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "item-card";
+        card.innerHTML = `
+          <div>
+            <div class="item-sku">${item.id}</div>
+            <div class="item-name">${item.name}</div>
+            <div class="item-specs">${item.spec}</div>
+          </div>
+          <div>
+            <div class="item-meta">
+              <span class="item-price">₹${item.price}</span>
+              <span class="stock-tag ${item.status === 'in' ? 'stock-in' : 'stock-low'}">${item.stock} in stock</span>
+            </div>
+            <button class="add-btn" onclick="addToCart('${item.id}')">+ Add to Order</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    window.addToCart = function(id) {
+      cart[id] = (cart[id] || 0) + 1;
+      updateCartUI();
+    };
+
+    window.changeQty = function(id, delta) {
+      if (!cart[id]) return;
+      cart[id] += delta;
+      if (cart[id] <= 0) delete cart[id];
+      updateCartUI();
+    };
+
+    function updateCartUI() {
+      const list = document.getElementById("cartList");
+      const ids = Object.keys(cart);
+      const totalItems = ids.reduce((sum, id) => sum + cart[id], 0);
+      document.getElementById("cartCountBadge").textContent = `${totalItems} items`;
+
+      if (ids.length === 0) {
+        list.innerHTML = '<p style="color: #64748b; font-size: 11px; text-align: center; padding: 20px 0;">Order buffer is empty.<br />Click items to allocate.</p>';
+        document.getElementById("subtotalText").textContent = "₹0.00";
+        document.getElementById("discountText").textContent = "-₹0.00";
+        document.getElementById("taxText").textContent = "₹0.00";
+        document.getElementById("grandTotalText").textContent = "₹0.00";
+        return;
+      }
+
+      let subtotal = 0;
+      list.innerHTML = "";
+      ids.forEach(id => {
+        const prod = PRODUCTS.find(p => p.id === id);
+        const qty = cart[id];
+        const lineTotal = prod.price * qty;
+        subtotal += lineTotal;
+
+        const row = document.createElement("div");
+        row.className = "cart-row";
+        row.innerHTML = `
+          <div class="cart-row-title">${prod.name} (${qty}x)</div>
+          <div class="cart-row-ctrl">
+            <button class="qty-btn" onclick="changeQty('${id}', -1)">-</button>
+            <span style="font-family: monospace; font-size: 11px; width: 14px; text-align: center;">${qty}</span>
+            <button class="qty-btn" onclick="changeQty('${id}', 1)">+</button>
+            <span style="font-family: monospace; font-size: 11px; color: #38bdf8; margin-left: 6px;">₹${lineTotal}</span>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+
+      const discount = subtotal * 0.15; // 15% Gold Dealer Tier
+      const taxable = subtotal - discount;
+      const tax = taxable * 0.18; // 18% GST
+      const grandTotal = taxable + tax;
+
+      document.getElementById("subtotalText").textContent = `₹${subtotal.toLocaleString('en-IN')}`;
+      document.getElementById("discountText").textContent = `-₹${discount.toLocaleString('en-IN', { maximumFractionDigits: 1 })}`;
+      document.getElementById("taxText").textContent = `₹${tax.toLocaleString('en-IN', { maximumFractionDigits: 1 })}`;
+      document.getElementById("grandTotalText").textContent = `₹${grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 1 })}`;
+    }
+
+    // Filter toolbar buttons
+    let activeFilter = "all";
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeFilter = btn.dataset.cat;
+        renderCatalog(activeFilter, document.getElementById("searchInput").value);
+      });
+    });
+
+    // Search
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      renderCatalog(activeFilter, e.target.value);
+    });
+
+    // Dispatch slip modal
+    document.getElementById("dispatchBtn").addEventListener("click", () => {
+      const ids = Object.keys(cart);
+      if (ids.length === 0) {
+        alert("Please add items to your wholesale order first.");
+        return;
+      }
+      document.getElementById("slipTimestamp").textContent = new Date().toLocaleString();
+      const itemsContainer = document.getElementById("slipItems");
+      itemsContainer.innerHTML = "";
+
+      let subtotal = 0;
+      ids.forEach(id => {
+        const prod = PRODUCTS.find(p => p.id === id);
+        const qty = cart[id];
+        const lineTotal = prod.price * qty;
+        subtotal += lineTotal;
+        const line = document.createElement("div");
+        line.style.display = "flex";
+        line.style.justifyContent = "space-between";
+        line.style.marginBottom = "3px";
+        line.innerHTML = `<span>${prod.id} — ${prod.name} x${qty}</span><span>₹${lineTotal}</span>`;
+        itemsContainer.appendChild(line);
+      });
+
+      const grandTotal = (subtotal * 0.85) * 1.18;
+      document.getElementById("slipTotal").textContent = `NET TOTAL: ₹${grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+      document.getElementById("modalOverlay").classList.add("active");
+    });
+
+    document.getElementById("modalClose").addEventListener("click", () => {
+      document.getElementById("modalOverlay").classList.remove("active");
+    });
+
+    // Initial render with 2 starter sample items in buffer
+    renderCatalog();
+    addToCart("NLK-101");
+    addToCart("NLK-201");
+  </script>
+</body>
+</html>

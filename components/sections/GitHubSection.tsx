@@ -26,6 +26,25 @@ interface AnimatedCounterProps {
   delay?: number;
 }
 
+function formatBytes(bytes: number): string {
+  if (!bytes || bytes <= 0) return "";
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${bytes} B`;
+}
+
+function formatReadableDate(dateStr: string): string {
+  try {
+    return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
 function AnimatedCounter({ target, prefix = "", suffix = "", isInView, delay = 0 }: AnimatedCounterProps) {
   const [val, setVal] = useState(0);
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -219,40 +238,54 @@ export function GitHubSection() {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <Code size={15} className="text-blue-400" />
-                <span>Language Distribution</span>
+                <span>Language Breakdown</span>
               </h3>
-              <span className="text-[10px] font-mono text-gray-400">Across Repos</span>
+              <span className="text-[10px] font-mono text-gray-400">
+                {stats.topLanguages.length} Languages Across Repos
+              </span>
             </div>
 
             {/* Segmented bar */}
-            <div className="h-2 w-full rounded-full overflow-hidden flex bg-white/5 p-0.5 gap-0.5">
-              {stats.topLanguages.map((lang, lIdx) => (
-                <motion.div
-                  key={lang.name}
-                  initial={{ width: 0 }}
-                  animate={isInView ? { width: `${lang.percentage}%` } : { width: 0 }}
-                  transition={{ duration: 0.8, delay: 0.2 + lIdx * 0.08, ease: [0.16, 1, 0.3, 1] }}
-                  style={{
-                    backgroundColor: lang.color
-                  }}
-                  className="h-full rounded-full"
-                  title={`${lang.name}: ${lang.percentage}%`}
-                />
-              ))}
+            <div className="h-2.5 w-full rounded-full overflow-hidden flex bg-white/5 p-0.5 gap-0.5">
+              {stats.topLanguages.map((lang, lIdx) => {
+                const visualWidth = Math.max(lang.percentage, 1.2);
+                return (
+                  <motion.div
+                    key={lang.name}
+                    initial={{ width: 0 }}
+                    animate={isInView ? { width: `${visualWidth}%` } : { width: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2 + lIdx * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                      backgroundColor: lang.color
+                    }}
+                    className="h-full rounded-full shrink-0"
+                    title={`${lang.name}: ${lang.percentage}%${lang.bytes > 0 ? ` (${formatBytes(lang.bytes)})` : ""}`}
+                  />
+                );
+              })}
             </div>
 
-            {/* Language Legend */}
-            <div className="grid grid-cols-2 gap-2 pt-0.5 font-mono text-xs">
+            {/* Language Legend - Every single language with size and percentage */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-0.5 font-mono text-xs">
               {stats.topLanguages.map((lang) => (
-                <div key={lang.name} className="flex items-center justify-between p-1 rounded bg-white/[0.02] hover:bg-white/[0.05] transition-colors">
-                  <div className="flex items-center gap-1.5">
+                <div
+                  key={lang.name}
+                  className="flex items-center justify-between p-1.5 rounded-lg bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 transition-colors"
+                  title={`${lang.name}: ${lang.percentage}%${lang.bytes > 0 ? ` (${formatBytes(lang.bytes)})` : ""}`}
+                >
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <span
                       className="h-2 w-2 rounded-full shrink-0"
                       style={{ backgroundColor: lang.color }}
                     />
-                    <span className="text-gray-300 text-[11px] truncate">{lang.name}</span>
+                    <span className="text-gray-200 text-[11px] truncate font-medium">{lang.name}</span>
                   </div>
-                  <span className="text-gray-400 text-[11px] font-semibold">{lang.percentage}%</span>
+                  <div className="flex items-center gap-1 text-[10px] shrink-0 pl-1">
+                    {lang.bytes > 0 && (
+                      <span className="text-gray-500 hidden sm:inline">{formatBytes(lang.bytes)}</span>
+                    )}
+                    <span className="text-gray-300 font-semibold">{lang.percentage}%</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -297,63 +330,72 @@ export function GitHubSection() {
             {/* Graphical 1: Contribution Heatmap Grid (Real Data) */}
             <div className="space-y-1">
               <div className="flex items-center justify-between text-[11px] font-mono text-gray-400">
-                <span>Contribution Heatmap (20 Weeks)</span>
+                <span>Contribution Heatmap (22 Weeks)</span>
                 <span className="text-emerald-400 text-[10px]">Shipping Cadence</span>
               </div>
 
               {/* Heatmap Matrix Container */}
               <div className="overflow-x-auto pb-1 scrollbar-none touch-pan-x">
-                <div className="inline-block min-w-full">
-                  {/* Month headers */}
-                  <div className="flex justify-between text-[9px] font-mono text-gray-500 mb-1 px-0.5">
-                    {stats.heatmapMonths.map((m, idx) => (
-                      <span key={`${m}-${idx}`}>{m}</span>
+                <div className="inline-flex flex-col w-max">
+                  {/* Month headers row - matching week columns exactly */}
+                  <div className="flex gap-1 mb-1.5 h-3.5 relative">
+                    {stats.heatmapWeeks.map((week, wIdx) => (
+                      <div key={wIdx} className="w-2.5 sm:w-3 relative shrink-0">
+                        {week.monthLabel && (
+                          <span className="absolute left-0 top-0 text-[9px] font-mono text-gray-400 whitespace-nowrap select-none font-semibold">
+                            {week.monthLabel}
+                          </span>
+                        )}
+                      </div>
                     ))}
                   </div>
 
-                  {/* 7 rows (days) x 20 columns (weeks) */}
-                  <div className="grid grid-rows-7 grid-flow-col gap-1 w-max">
-                    {stats.heatmapDays.map((d, idx) => {
-                      let formattedDate = d.date;
-                      try {
-                        formattedDate = new Date(d.date + "T00:00:00").toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric"
-                        });
-                      } catch {
-                        // fallback
-                      }
-                      return (
-                        <div
-                          key={`${d.date}-${idx}`}
-                          title={`${formattedDate}: ${d.count} commit${d.count === 1 ? "" : "s"}`}
-                          className={`h-2.5 w-2.5 rounded-[2px] transition-transform duration-200 hover:scale-125 cursor-pointer ${
-                            d.level === 0
-                              ? "bg-white/[0.04]"
-                              : d.level === 1
-                              ? "bg-emerald-950/70 border border-emerald-800/40"
-                              : d.level === 2
-                              ? "bg-emerald-700/70 border border-emerald-600/40"
-                              : d.level === 3
-                              ? "bg-emerald-500/80 border border-emerald-400/50"
-                              : "bg-emerald-400 border border-emerald-300 shadow-[0_0_6px_rgba(52,211,153,0.5)]"
-                          }`}
-                        />
-                      );
-                    })}
+                  {/* 22 Week Columns x 7 Day Rows */}
+                  <div className="flex gap-1">
+                    {stats.heatmapWeeks.map((week, wIdx) => (
+                      <div key={wIdx} className="flex flex-col gap-1 shrink-0 w-2.5 sm:w-3">
+                        {week.days.map((d, dIdx) => {
+                          if (d.isFuture) {
+                            return (
+                              <div
+                                key={`${d.date}-${dIdx}`}
+                                className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-[2px] opacity-0 pointer-events-none"
+                              />
+                            );
+                          }
+                          const formattedDate = formatReadableDate(d.date);
+                          return (
+                            <div
+                              key={`${d.date}-${dIdx}`}
+                              title={`${formattedDate}: ${d.count} commit${d.count === 1 ? "" : "s"}`}
+                              className={`h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-[2px] transition-all duration-200 hover:scale-125 cursor-pointer ${
+                                d.level === 0
+                                  ? "bg-white/[0.04] hover:bg-white/10"
+                                  : d.level === 1
+                                  ? "bg-emerald-950/80 border border-emerald-800/40 hover:border-emerald-700"
+                                  : d.level === 2
+                                  ? "bg-emerald-700/70 border border-emerald-600/40 hover:border-emerald-500"
+                                  : d.level === 3
+                                  ? "bg-emerald-500/80 border border-emerald-400/50 hover:border-emerald-300"
+                                  : "bg-emerald-400 border border-emerald-300 shadow-[0_0_6px_rgba(52,211,153,0.6)] hover:shadow-[0_0_8px_rgba(52,211,153,0.9)]"
+                              }`}
+                            />
+                          );
+                        })}
+                      </div>
+                    ))}
                   </div>
 
                   {/* Legend */}
-                  <div className="flex items-center justify-between pt-1.5 text-[9px] font-mono text-gray-500">
+                  <div className="flex items-center justify-between pt-2 text-[9px] font-mono text-gray-500">
                     <span>Mon - Sun</span>
                     <div className="flex items-center gap-1">
                       <span>Less</span>
                       <span className="h-2 w-2 rounded-[1px] bg-white/[0.04]" />
-                      <span className="h-2 w-2 rounded-[1px] bg-emerald-950/70" />
-                      <span className="h-2 w-2 rounded-[1px] bg-emerald-700/70" />
-                      <span className="h-2 w-2 rounded-[1px] bg-emerald-500/80" />
-                      <span className="h-2 w-2 rounded-[1px] bg-emerald-400" />
+                      <span className="h-2 w-2 rounded-[1px] bg-emerald-950/80 border border-emerald-800/40" />
+                      <span className="h-2 w-2 rounded-[1px] bg-emerald-700/70 border border-emerald-600/40" />
+                      <span className="h-2 w-2 rounded-[1px] bg-emerald-500/80 border border-emerald-400/50" />
+                      <span className="h-2 w-2 rounded-[1px] bg-emerald-400 border border-emerald-300 shadow-[0_0_4px_rgba(52,211,153,0.5)]" />
                       <span>More</span>
                     </div>
                   </div>
