@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
-import { Terminal, User, Sparkles, FolderGit2, Mail, Menu, X, Compass, Layers } from "lucide-react";
+import { Terminal, User, Sparkles, FolderGit2, Mail, Menu, X, Compass, Layers, Milestone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PERSONAL_INFO } from "@/lib/data";
 
@@ -13,7 +13,7 @@ const NAV_ITEMS = [
   { name: "Projects", href: "#projects", icon: Sparkles },
   { name: "Building Now", href: "#currently-building", icon: Terminal },
   { name: "GitHub", href: "#github", icon: FolderGit2 },
-  { name: "Contact", href: "#contact", icon: Mail },
+  { name: "Journey", href: "#journey", icon: Milestone },
 ];
 
 interface NavMetric {
@@ -112,7 +112,6 @@ export function Navbar() {
   const navigatePillToTab = useCallback(
     (targetId: string, smoothScroll = true) => {
       const metric = navMetricsRef.current.find((m) => m.id === targetId);
-      if (!metric) return;
 
       // Stop any existing spring animations immediately
       if (activeAnimationXRef.current) {
@@ -124,64 +123,102 @@ export function Navbar() {
         activeAnimationWRef.current = null;
       }
 
-      // Lock scroll listeners so intermediate scrollY values never pull the pill backwards
-      isNavigatingRef.current = true;
-      navigatingTargetScrollRef.current = metric.targetScrollTop;
-      activeSectionRef.current = targetId;
-      setActiveSection(targetId);
+      if (metric) {
+        // Lock scroll listeners so intermediate scrollY values never pull the pill backwards
+        isNavigatingRef.current = true;
+        navigatingTargetScrollRef.current = metric.targetScrollTop;
+        activeSectionRef.current = targetId;
+        setActiveSection(targetId);
 
-      // Dispatch custom section-navigate event so module SectionBadges trigger fresh
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(
-          new CustomEvent("portfolio:section-navigate", {
-            detail: { sectionId: targetId },
-          })
-        );
-      }
+        // Dispatch custom section-navigate event so module SectionBadges trigger fresh
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("portfolio:section-navigate", {
+              detail: { sectionId: targetId },
+            })
+          );
+        }
 
-      scrollTargetXRef.current = metric.tabLeft;
-      scrollTargetWRef.current = metric.tabWidth;
+        scrollTargetXRef.current = metric.tabLeft;
+        scrollTargetWRef.current = metric.tabWidth;
 
-      if (!pillReady) {
-        pillX.set(metric.tabLeft);
-        pillWidth.set(metric.tabWidth);
-        setPillReady(true);
-      } else {
-        // Direct forward spring to target tab
-        activeAnimationXRef.current = animate(pillX, metric.tabLeft, {
-          type: "spring",
-          stiffness: 300,
-          damping: 28,
-          mass: 0.5,
-          onComplete: () => {
-            activeAnimationXRef.current = null;
-          },
-        });
+        if (!pillReady) {
+          pillX.set(metric.tabLeft);
+          pillWidth.set(metric.tabWidth);
+          setPillReady(true);
+        } else {
+          // Direct forward spring to target tab
+          activeAnimationXRef.current = animate(pillX, metric.tabLeft, {
+            type: "spring",
+            stiffness: 300,
+            damping: 28,
+            mass: 0.5,
+            onComplete: () => {
+              activeAnimationXRef.current = null;
+            },
+          });
 
-        activeAnimationWRef.current = animate(pillWidth, metric.tabWidth, {
-          type: "spring",
-          stiffness: 300,
-          damping: 28,
-          mass: 0.5,
-          onComplete: () => {
-            activeAnimationWRef.current = null;
-          },
-        });
-      }
+          activeAnimationWRef.current = animate(pillWidth, metric.tabWidth, {
+            type: "spring",
+            stiffness: 300,
+            damping: 28,
+            mass: 0.5,
+            onComplete: () => {
+              activeAnimationWRef.current = null;
+            },
+          });
+        }
 
-      if (smoothScroll) {
-        window.scrollTo({
-          top: metric.targetScrollTop,
-          behavior: "smooth",
-        });
+        if (smoothScroll) {
+          window.scrollTo({
+            top: metric.targetScrollTop,
+            behavior: "smooth",
+          });
 
-        // Set safety timeout to release navigation lock if scroll completes
-        if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
-        scrollEndTimerRef.current = setTimeout(() => {
+          // Set safety timeout to release navigation lock if scroll completes
+          if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
+          scrollEndTimerRef.current = setTimeout(() => {
+            isNavigatingRef.current = false;
+          }, 800);
+        } else {
           isNavigatingRef.current = false;
-        }, 800);
+        }
       } else {
-        isNavigatingRef.current = false;
+        // Target is not a direct navbar tab (e.g., #contact, #stats)
+        const sectionEl = document.getElementById(targetId);
+        if (sectionEl) {
+          const contentTarget = (sectionEl.firstElementChild as HTMLElement) || sectionEl;
+          const scrollY = window.pageYOffset || window.scrollY || 0;
+          const targetTop = contentTarget.getBoundingClientRect().top + scrollY;
+          const targetScrollTop = Math.max(0, targetTop - 76);
+
+          isNavigatingRef.current = true;
+          navigatingTargetScrollRef.current = targetScrollTop;
+          activeSectionRef.current = targetId;
+          setActiveSection(targetId);
+
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(
+              new CustomEvent("portfolio:section-navigate", {
+                detail: { sectionId: targetId },
+              })
+            );
+          }
+
+          if (smoothScroll) {
+            window.scrollTo({
+              top: targetScrollTop,
+              behavior: "smooth",
+            });
+
+            if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
+            scrollEndTimerRef.current = setTimeout(() => {
+              isNavigatingRef.current = false;
+            }, 800);
+          } else {
+            isNavigatingRef.current = false;
+          }
+        }
       }
     },
     [pillReady, pillX, pillWidth]
@@ -733,7 +770,7 @@ export function Navbar() {
                   onDragStart={(e) => e.preventDefault()}
                   onClick={(e) => handleLinkClick(e, item.href)}
                   className={cn(
-                    "relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-full select-none transition-colors duration-200 cursor-default",
+                    "relative z-10 px-3.5 py-1.5 text-xs font-medium rounded-full select-none transition-colors duration-200 cursor-pointer",
                     isActive
                       ? "text-white font-semibold"
                       : "text-gray-400 hover:text-white"
@@ -754,7 +791,7 @@ export function Navbar() {
               whileTap={{ scale: 0.96 }}
               href="#contact"
               onClick={(e) => scrollToSection(e, "#contact")}
-              className="relative inline-flex items-center justify-center p-0.5 overflow-hidden text-xs font-semibold rounded-full group bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg hover:shadow-blue-500/25 transition-all duration-300 cursor-default"
+              className="relative inline-flex items-center justify-center p-0.5 overflow-hidden text-xs font-semibold rounded-full group bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg hover:shadow-blue-500/25 transition-all duration-300 cursor-pointer"
             >
               <span className="px-4 py-1.5 transition-all ease-in duration-75 bg-[#0A0A0C] rounded-full group-hover:bg-transparent">
                 Connect
@@ -807,7 +844,7 @@ export function Navbar() {
                       transition={{ delay: index * 0.03, duration: 0.2 }}
                       whileTap={{ scale: 0.97 }}
                       className={cn(
-                        "flex items-center gap-3 p-3 rounded-xl border text-sm font-medium transition-all active:scale-98",
+                        "flex items-center gap-3 p-3 rounded-xl border text-sm font-medium transition-all active:scale-98 cursor-pointer",
                         isActive
                           ? "bg-gradient-to-r from-blue-600/30 to-purple-600/30 border-blue-500/50 text-white font-semibold"
                           : "bg-white/[0.02] border-white/5 text-gray-400 hover:text-white hover:bg-white/[0.05]"
@@ -818,6 +855,19 @@ export function Navbar() {
                     </motion.a>
                   );
                 })}
+                {/* Mobile Connect CTA button */}
+                <motion.a
+                  href="#contact"
+                  onClick={(e) => scrollToSection(e, "#contact")}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 7 * 0.03, duration: 0.2 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex items-center justify-center gap-2 p-3 rounded-xl border border-blue-500/40 bg-gradient-to-r from-blue-600/30 via-purple-600/30 to-pink-600/30 text-white font-semibold text-sm cursor-pointer shadow-lg"
+                >
+                  <Mail size={16} className="text-pink-400" />
+                  <span>Connect</span>
+                </motion.a>
               </div>
             </motion.div>
           </>

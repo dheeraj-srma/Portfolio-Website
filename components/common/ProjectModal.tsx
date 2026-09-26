@@ -52,6 +52,11 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
   const [stockModelSelect, setStockModelSelect] = useState<"arima" | "lstm" | "rf">("lstm");
   const [nalkaSearch, setNalkaSearch] = useState("");
   const [nalkaCartCount, setNalkaCartCount] = useState(3);
+  const [medxSearch, setMedxSearch] = useState("");
+  const [medxCartItems, setMedxCartItems] = useState([
+    { id: "M1", name: "Amoxicillin 500mg (Amoxil)", batch: "BT-2489", exp: "11/2027", status: "Valid", qty: 2, mrp: "₹118.00", schedule: "H" },
+    { id: "M2", name: "Paracetamol 650mg (Dolo)", batch: "DL-9012", exp: "08/2028", status: "Valid", qty: 3, mrp: "₹34.50", schedule: "OTC" },
+  ]);
 
   useEffect(() => {
     setMounted(true);
@@ -386,7 +391,134 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
                       </div>
                     )}
 
-                    {/* 2. AURA AI Assistant Simulator */}
+                    {/* 2. MedX Pharmacy POS & Dispensing Simulator */}
+                    {project.id === "medx-pharmacy-system" && (
+                      <div className="rounded-xl border border-white/15 bg-[#090D12] p-5 space-y-4">
+                        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-lg bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center font-bold text-emerald-300 text-xs font-mono">
+                              Rx
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-bold text-white">MedX Pharmacy · Retail POS & Dispensing Engine</h4>
+                              <p className="text-[11px] font-mono text-gray-400">FEFO Auto-Batch Allocation · GST Compliance & Expiry Safe</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-1 rounded-full text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                              Rx Dispensing: {medxCartItems.length} items
+                            </span>
+                            <button
+                              onClick={() => alert("Simulation: GST-compliant Prescription Invoice & Thermal Receipt generated via jsPDF engine!")}
+                              className="px-3 py-1 rounded-lg text-xs font-mono bg-emerald-600 hover:bg-emerald-500 text-white transition-colors cursor-pointer"
+                            >
+                              Print Thermal Rx
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Search & Barcode Scan Bar */}
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="Scan Barcode or Search Medicine (e.g. Amoxicillin, Azithromycin, Dolo, Pantoprazole)..."
+                            value={medxSearch}
+                            onChange={(e) => setMedxSearch(e.target.value)}
+                            className="flex-1 px-3 py-2 rounded-lg bg-black/50 border border-white/10 text-xs font-mono text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                          />
+                          <button
+                            onClick={() => {
+                              const newMed = {
+                                id: `M${Date.now()}`,
+                                name: "Azithromycin 500mg (Azee)",
+                                batch: "AZ-8921",
+                                exp: "05/2027",
+                                status: "Valid",
+                                qty: 1,
+                                mrp: "₹142.00",
+                                schedule: "H"
+                              };
+                              setMedxCartItems((prev) => [...prev, newMed]);
+                            }}
+                            className="px-3 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-xs font-mono text-emerald-300 hover:bg-emerald-500/30 cursor-pointer"
+                          >
+                            + Quick Scan Barcode
+                          </button>
+                        </div>
+
+                        {/* Medicine Dispensing Batch Table */}
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs font-mono">
+                            <thead className="bg-white/5 text-gray-400 uppercase text-[10px]">
+                              <tr>
+                                <th className="p-2.5">Medicine / Molecule</th>
+                                <th className="p-2.5">Batch No</th>
+                                <th className="p-2.5">Expiry Date</th>
+                                <th className="p-2.5">Schedule</th>
+                                <th className="p-2.5">Unit MRP</th>
+                                <th className="p-2.5 text-right">Action</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5 text-gray-300">
+                              {[
+                                { id: "1", name: "Amoxicillin 500mg (Amoxil)", batch: "BT-2489", exp: "11/2027", status: "Valid", schedule: "Schedule H", mrp: "₹118.00" },
+                                { id: "2", name: "Paracetamol 650mg (Dolo)", batch: "DL-9012", exp: "08/2028", status: "Valid", schedule: "OTC", mrp: "₹34.50" },
+                                { id: "3", name: "Pantoprazole 40mg (Pan-40)", batch: "PN-3301", exp: "03/2027", status: "Valid", schedule: "Schedule H", mrp: "₹155.00" },
+                                { id: "4", name: "Cetirizine 10mg (Cetzine)", batch: "CT-1102", exp: "01/2028", status: "Valid", schedule: "OTC", mrp: "₹22.00" }
+                              ]
+                                .filter((item) =>
+                                  medxSearch
+                                    ? item.name.toLowerCase().includes(medxSearch.toLowerCase()) ||
+                                      item.batch.toLowerCase().includes(medxSearch.toLowerCase())
+                                    : true
+                                )
+                                .map((row) => (
+                                  <tr key={row.id} className="hover:bg-white/[0.02]">
+                                    <td className="p-2.5 text-white font-medium">{row.name}</td>
+                                    <td className="p-2.5 text-cyan-400 font-mono">{row.batch}</td>
+                                    <td className="p-2.5">
+                                      <span className="inline-flex items-center gap-1 text-emerald-400">
+                                        <CheckCircle2 size={12} />
+                                        {row.exp}
+                                      </span>
+                                    </td>
+                                    <td className="p-2.5">
+                                      <span className={`px-2 py-0.5 rounded text-[10px] ${row.schedule.includes("H") ? "bg-amber-500/10 text-amber-300 border border-amber-500/30" : "bg-blue-500/10 text-blue-300 border border-blue-500/30"}`}>
+                                        {row.schedule}
+                                      </span>
+                                    </td>
+                                    <td className="p-2.5 text-white">{row.mrp}</td>
+                                    <td className="p-2.5 text-right">
+                                      <button
+                                        onClick={() => {
+                                          setMedxCartItems((prev) => [
+                                            ...prev,
+                                            {
+                                              id: `M${Date.now()}`,
+                                              name: row.name,
+                                              batch: row.batch,
+                                              exp: row.exp,
+                                              status: row.status,
+                                              qty: 1,
+                                              mrp: row.mrp,
+                                              schedule: row.schedule
+                                            }
+                                          ]);
+                                        }}
+                                        className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 text-[11px] cursor-pointer"
+                                      >
+                                        + Dispense
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 3. AURA AI Assistant Simulator */}
                     {project.id === "aura-ai-assistant" && (
                       <div className="rounded-xl border border-white/15 bg-[#09090E] p-5 space-y-4">
                         <div className="flex items-center justify-between border-b border-white/10 pb-3">
@@ -652,7 +784,7 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
                     )}
 
                     {/* Generic High-Fidelity Overview Card for remaining projects */}
-                    {!["nalka-dealer-portal", "aura-ai-assistant", "tb-3d-ai", "stock-prediction-experiments"].includes(project.id) && (
+                    {!["nalka-dealer-portal", "medx-pharmacy-system", "aura-ai-assistant", "tb-3d-ai", "stock-prediction-experiments"].includes(project.id) && (
                       <div className="p-8 rounded-xl border border-white/15 bg-white/[0.02] text-center space-y-4">
                         <div className="inline-flex p-3 rounded-2xl bg-white/5 border border-white/10 text-blue-400">
                           <Code2 size={28} />

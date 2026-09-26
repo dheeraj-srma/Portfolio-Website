@@ -162,7 +162,7 @@ export const WHAT_I_BUILD = [
     description:
       "Translating software into practical tools used by actual businesses: managing thousands of hardware SKUs, tracking dealer credit limits, and keeping teams synchronized.",
     icon: "PackageCheck",
-    examples: ["Nalka Dealer Order App", "Hardware Billing Software", "Real-Time Stock Manager"],
+    examples: ["Nalka Dealer Order App", "MedX Pharmacy Management", "Hardware Billing Software"],
     accent: "from-cyan-500/20 to-blue-500/20",
     border: "group-hover:border-cyan-500/50"
   }
@@ -358,50 +358,50 @@ export const PROJECTS: ProjectData[] = [
     }
   },
   {
-    id: "nalka-stock-intelligence",
-    title: "Nalka Inventory Management & Stock Intelligence Platform",
+    id: "medx-pharmacy-system",
+    title: "MedX Pharmacy Management & Prescription Dispensing System",
     category: "software",
-    categoryLabel: "Business Software",
-    tagline: "Industrial stock monitoring, replenishment planning, and Tally integration",
+    categoryLabel: "Healthcare & Business Software",
+    tagline: "Point-of-sale, batch expiry tracking, and prescription inventory dispensing engine",
     summary:
-      "A centralized inventory intelligence platform for managing thousands of physical hardware SKUs. Features real-time stock monitoring, replenishment planning, cost estimation, negative stock alerts, and integration with TallyPrime.",
-    tags: ["TypeScript", "Next.js", "PostgreSQL", "Tailwind CSS", "Node.js", "TallyPrime XML API"],
-    githubUrl: "https://github.com/dheeraj-srma/Stock-Management-App",
-    liveUrl: "https://github.com/dheeraj-srma/Stock-Management-App",
+      "A full-featured pharmacy management and retail dispensing software built for medical stores and clinics. Handles drug inventory with batch number & expiry date tracking, scheduled medicine alerts, rapid POS billing, customer prescription records, and GST-compliant invoice generation.",
+    tags: ["TypeScript", "Next.js", "React", "PostgreSQL", "Tailwind CSS", "jsPDF", "REST API"],
+    githubUrl: "https://github.com/dheeraj-srma/Billing-software",
+    liveUrl: "https://github.com/dheeraj-srma/Billing-software",
     localPort: 5174,
     featured: true,
-    gradient: "from-emerald-900/40 via-teal-900/30 to-slate-950/50",
+    gradient: "from-emerald-900/40 via-teal-900/30 to-cyan-950/50",
     metrics: [
-      { label: "SKU Tracking", value: "3,680+ Items" },
-      { label: "ERP Link", value: "TallyPrime Integration" },
-      { label: "Intelligence", value: "Automated Restock Matrix" }
+      { label: "Safety Protocol", value: "Batch & Expiry Safe" },
+      { label: "Checkout Cadence", value: "< 2s POS Billing" },
+      { label: "Architecture", value: "PostgreSQL / Next.js" }
     ],
     story: {
-      idea: "Industrial warehouses cannot afford stockouts on key fasteners or fittings. This system transforms static spreadsheet lists into an intelligent stock cockpit that alerts warehouse managers before an item runs out, computes reorder quantities based on lead times, and keeps records synced with corporate accounts.",
+      idea: "Retail pharmacies handle thousands of medicines with strict regulatory constraints: batch numbers, manufacturing/expiry dates, Schedule H narcotics tracking, and dynamic pricing tiers. MedX was designed as a rapid, mistake-proof point-of-sale and inventory platform tailored for pharmacy workflows.",
       whyBuilt:
-        "Built to provide warehouse operators with an intuitive interface that categorizes items into healthy, low, critical, and negative stock status, calculating exact purchase budget requirements for pending replenishment.",
+        "Pharmacies cannot afford dispensing expired drugs or misplacing prescription records. Traditional generic POS systems lack medicine-specific safeguards like automatic batch-wise FEFO (First Expiry, First Out) deduction and near-expiry quarantine alerts.",
       howItWorks:
-        "Designed with a modular architecture connecting a responsive frontend with a relational database. It tracks minimum safe thresholds per SKU, computes negative balance corrections, and generates XML payloads formatted for direct ingestion into TallyPrime.",
-      techStack: ["TypeScript", "React", "Node.js", "PostgreSQL / Supabase", "Tailwind CSS", "Lucide Icons"],
+        "Built with TypeScript, React, and Next.js, backed by a relational PostgreSQL database. During billing, barcode scanning or quick medicine search immediately retrieves active batches sorted by earliest expiry. Dispensing auto-calculates taxes, applies patient discounts, checks restricted drug flags, and prints clean thermal or A4 prescription invoices via jsPDF.",
+      techStack: ["TypeScript", "Next.js", "React", "Tailwind CSS", "PostgreSQL / Supabase", "jsPDF", "Lucide Icons"],
       challenges:
-        "Designing an ergonomic UX that allows quick navigation across 3,600+ items with instant filtering by category, finish, and status without page reloads.",
+        "Ensuring sub-second barcode search latency across thousands of medicine trade names and generic salt equivalents, while handling concurrent multi-terminal billing counters without race conditions on stock decrements.",
       learnings:
-        "Understood real-world inventory accounting rules (FIFO vs weighted average), audit trail design, and how to build software that non-technical warehouse staff find easy and reliable.",
+        "Learned relational transaction locking (preventing negative inventory under simultaneous checkouts), regulatory compliance workflows in healthcare retail, and how to build keyboard-first UIs for lightning-fast cashier operations.",
       improvements:
-        "Adding automated barcode/QR scanning integration for mobile receipt and dispatch logging directly from the warehouse floor."
+        "Adding automated WhatsApp / SMS prescription refill reminders and AI-assisted handwritten prescription OCR scanning."
     },
     architecture: {
-      title: "Inventory Intelligence Architecture",
+      title: "Pharmacy POS & Batch Lifecycle Flow",
       flow: [
-        "1. Real-time SKU registry with categorized thresholds (Minimum / Reorder / Critical)",
-        "2. Stock delta capture via incoming shipments and outgoing dispatch slips",
-        "3. Automated health assessment engine flags critical items and negative balances",
-        "4. Replenishment Calculator estimates restock cost using latest supplier rates",
-        "5. Sync daemon formats data payloads for TallyPrime integration",
-        "6. Audit ledger logs every inventory movement with timestamp and operator ID"
+        "1. Inward Goods Receipt: Medicines logged with Batch No, Expiry Date, MRP, and Purchase Rate",
+        "2. Automated Quarantine Engine: Flags medicines expiring within 90/60/30 days",
+        "3. Cashier POS Terminal: Fast lookup by Brand Name or Generic Molecule",
+        "4. Batch Selection: Automatic First-Expiry-First-Out (FEFO) recommendation",
+        "5. Atomic Checkout: Relational database transaction reserves stock and logs audit trail",
+        "6. Invoice Generation: Instant GST & batch-detailed thermal/A4 receipt dispatch"
       ],
       details:
-        "Engineered for reliability in high-turnover industrial distribution environments."
+        "Engineered with strict data integrity to guarantee zero expired batch dispensing and complete regulatory compliance."
     }
   },
   {
