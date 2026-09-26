@@ -19,7 +19,6 @@ import {
   BuildModeToggle,
   BuildModeTag,
   NeuralBrain,
-  StarMap,
   EngineeringDNA,
   GitHubHeartbeat,
   DigitalBackpack,
@@ -92,11 +91,6 @@ export default function Home() {
         <div className="relative">
           <div className="max-w-7xl mx-auto px-4 md:px-8 pt-6 -mb-16 flex justify-between items-center">
             <BuildModeTag label="PROJECT_GRAPH" spec="VERIFIED_WORK" />
-          </div>
-
-          {/* Desktop Right Gutter: Star Map Constellation */}
-          <div className="hidden 2xl:block absolute -right-24 top-36 z-20 pointer-events-auto">
-            <StarMap />
           </div>
 
           <ProjectsSection />

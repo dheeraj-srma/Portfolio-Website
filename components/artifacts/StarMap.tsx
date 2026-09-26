@@ -64,14 +64,24 @@ export function StarMap({ className = "" }: { className?: string }) {
         y: 75,
         magnitude: 6,
         color: "#EC4899",
-        projectRef: PROJECTS.find((p) => p.id === "time-series-prediction"),
+        projectRef: PROJECTS.find((p) => p.id === "stock-prediction-experiments"),
+      },
+      {
+        id: "medx",
+        name: "MEDX PHARMACY",
+        category: "HEALTHCARE POS",
+        x: 84,
+        y: 48,
+        magnitude: 6.5,
+        color: "#34D399",
+        projectRef: PROJECTS.find((p) => p.id === "medx-pharmacy-system"),
       },
       {
         id: "cognitive",
         name: "BEHAVIOR AI",
         category: "VISION TELEMETRY",
-        x: 76,
-        y: 72,
+        x: 74,
+        y: 75,
         magnitude: 6.5,
         color: "#10B981",
         projectRef: PROJECTS.find((p) => p.id === "cognitive-behavior-analysis"),
@@ -84,7 +94,7 @@ export function StarMap({ className = "" }: { className?: string }) {
         y: 20,
         magnitude: 5.5,
         color: "#F59E0B",
-        projectRef: PROJECTS.find((p) => p.id === "face-analyzer"),
+        projectRef: PROJECTS.find((p) => p.id === "cognitive-behavior-analysis"),
       },
     ];
   }, []);
@@ -112,6 +122,8 @@ export function StarMap({ className = "" }: { className?: string }) {
       ["faceanalyzer", "nalka"],
       ["aura", "tb3d"],
       ["nalka", "tb3d"],
+      ["nalka", "medx"],
+      ["medx", "cognitive"],
       ["aura", "timeseries"],
       ["tb3d", "timeseries"],
       ["tb3d", "cognitive"],
@@ -144,7 +156,7 @@ export function StarMap({ className = "" }: { className?: string }) {
     <>
       <div
         ref={containerRef}
-        className={`relative w-72 h-72 sm:w-80 sm:h-80 rounded-3xl p-4 backdrop-blur-xl bg-neutral-950/70 border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.6)] luminous-border group select-none transition-all duration-300 hover:border-white/25 hover:shadow-[0_20px_50px_rgba(168,85,247,0.2)] ${className}`}
+        className={`relative rounded-3xl p-4 backdrop-blur-xl bg-neutral-950/80 border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.6)] luminous-border group select-none transition-all duration-300 hover:border-white/25 hover:shadow-[0_20px_50px_rgba(168,85,247,0.2)] ${className || "w-72 h-72 sm:w-80 sm:h-80"}`}
       >
         {/* Deep space cosmic gradient */}
         <div className="absolute inset-0 rounded-3xl bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/15 via-blue-950/10 to-transparent opacity-70" />
@@ -158,7 +170,7 @@ export function StarMap({ className = "" }: { className?: string }) {
             </span>
           </div>
           <span className="text-[9px] font-mono text-neutral-500">
-            6 ACTIVE STARS
+            7 ACTIVE STARS
           </span>
         </div>
 

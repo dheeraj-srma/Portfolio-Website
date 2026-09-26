@@ -3,7 +3,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NeuralBrain } from "./NeuralBrain";
-import { StarMap } from "./StarMap";
 import { EngineeringDNA } from "./EngineeringDNA";
 import { GitHubHeartbeat } from "./GitHubHeartbeat";
 import { DigitalBackpack } from "./DigitalBackpack";
@@ -47,14 +46,9 @@ export function ArtifactSystem() {
       )}
 
       {/* =========================================================================
-          PROJECTS & GITHUB ZONE: Star Map & GitHub Heartbeat
+          PROJECTS & GITHUB ZONE: GitHub Heartbeat
          ========================================================================= */}
       <div className="relative w-full max-w-7xl mx-auto px-4 pointer-events-none z-20">
-        {/* Star Map: Floating on Right Margin near Projects */}
-        <div className="hidden 2xl:block absolute -right-28 top-[3200px] pointer-events-auto">
-          <StarMap />
-        </div>
-
         {/* GitHub Heartbeat: Floating on Left Margin near GitHub Section */}
         <div className="hidden 2xl:block absolute -left-28 top-[4100px] pointer-events-auto">
           <GitHubHeartbeat />
@@ -82,7 +76,6 @@ export function ArtifactSystem() {
 
         <div className="flex flex-wrap justify-center items-center gap-6">
           <NeuralBrain className="scale-90 sm:scale-100" />
-          <StarMap className="scale-90 sm:scale-100" />
           <GitHubHeartbeat className="scale-90 sm:scale-100" />
         </div>
       </div>
@@ -91,7 +84,6 @@ export function ArtifactSystem() {
 }
 
 export { NeuralBrain } from "./NeuralBrain";
-export { StarMap } from "./StarMap";
 export { EngineeringDNA } from "./EngineeringDNA";
 export { GitHubHeartbeat } from "./GitHubHeartbeat";
 export { DigitalBackpack } from "./DigitalBackpack";
