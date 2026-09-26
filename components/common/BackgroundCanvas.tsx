@@ -9,32 +9,40 @@ export function BackgroundCanvas() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
     let animationFrameId: number;
     let prefersReduced = false;
+    let isMobile = false;
 
-    if (typeof window !== "undefined" && window.matchMedia) {
-      prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (typeof window !== "undefined") {
+      if (window.matchMedia) {
+        prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      }
+      isMobile = window.innerWidth < 768;
     }
 
     const resizeCanvas = () => {
+      if (!canvas) return;
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      isMobile = window.innerWidth < 768;
     };
 
     resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("resize", resizeCanvas, { passive: true });
 
-    // Cosmic starfield particles with 3D depth (z)
-    const particleCount = Math.min(Math.floor(window.innerWidth / 14), 110);
+    // Lightweight starfield particle budget optimized for mobile 60fps
+    const particleCount = isMobile
+      ? Math.min(Math.floor(window.innerWidth / 20), 30)
+      : Math.min(Math.floor(window.innerWidth / 16), 75);
+
     const particles: {
       x: number;
       y: number;
-      z: number; // 3D depth layer factor (0.4 to 1.6)
+      z: number;
       radius: number;
-      baseAlpha: number;
       alpha: number;
       pulseSpeed: number;
       vx: number;
@@ -46,23 +54,21 @@ export function BackgroundCanvas() {
       "rgba(255, 255, 255,",
       "rgba(191, 219, 254,", // soft blue
       "rgba(233, 213, 255,", // soft purple
-      "rgba(254, 215, 170,"  // warm celestial
     ];
 
     for (let i = 0; i < particleCount; i++) {
       const z = Math.random() * 1.2 + 0.4;
-      const baseAlpha = (Math.random() * 0.5 + 0.2) * (z > 1 ? 1 : 0.8);
+      const baseAlpha = (Math.random() * 0.45 + 0.15) * (z > 1 ? 1 : 0.8);
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         z,
-        radius: (Math.random() * 1.2 + 0.5) * (0.6 + z * 0.4),
-        baseAlpha,
+        radius: (Math.random() * 1.1 + 0.5) * (0.6 + z * 0.4),
         alpha: baseAlpha,
-        pulseSpeed: (Math.random() * 0.015 + 0.005) * (Math.random() > 0.5 ? 1 : -1),
-        vx: (Math.random() - 0.5) * 0.12 * z,
-        vy: (Math.random() - 0.5) * 0.12 * z,
-        color: starColors[Math.floor(Math.random() * starColors.length)]
+        pulseSpeed: (Math.random() * 0.012 + 0.004) * (Math.random() > 0.5 ? 1 : -1),
+        vx: (Math.random() - 0.5) * 0.08 * z,
+        vy: (Math.random() - 0.5) * 0.08 * z,
+        color: starColors[Math.floor(Math.random() * starColors.length)],
       });
     }
 
@@ -71,18 +77,27 @@ export function BackgroundCanvas() {
     let mouseX = targetMouseX;
     let mouseY = targetMouseY;
     let scrollY = window.scrollY;
+    let scrollTicking = false;
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (prefersReduced) return;
+      if (prefersReduced || isMobile) return;
       targetMouseX = e.clientX;
       targetMouseY = e.clientY;
     };
 
     const handleScroll = () => {
-      scrollY = window.scrollY;
+      if (!scrollTicking) {
+        requestAnimationFrame(() => {
+          scrollY = window.scrollY;
+          scrollTicking = false;
+        });
+        scrollTicking = true;
+      }
     };
 
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    if (!isMobile) {
+      window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    }
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     let tick = 0;
@@ -91,96 +106,81 @@ export function BackgroundCanvas() {
       tick += 0.006;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Smooth mouse interpolation (lerp)
-      if (!prefersReduced) {
+      if (!prefersReduced && !isMobile) {
         mouseX += (targetMouseX - mouseX) * 0.04;
         mouseY += (targetMouseY - mouseY) * 0.04;
       }
 
-      // Mouse offset normalized (-0.5 to 0.5)
-      const mouseOffsetX = (mouseX / canvas.width - 0.5) * 30;
-      const mouseOffsetY = (mouseY / canvas.height - 0.5) * 30;
+      const mouseOffsetX = isMobile ? 0 : (mouseX / canvas.width - 0.5) * 24;
+      const mouseOffsetY = isMobile ? 0 : (mouseY / canvas.height - 0.5) * 24;
 
-      // Subtle celestial orbit rings in background with gentle pulse
-      const cx = canvas.width * 0.85 + (prefersReduced ? 0 : mouseOffsetX * 0.2);
-      const cy = canvas.height * 0.2 + (prefersReduced ? 0 : mouseOffsetY * 0.2);
-      const orbitPulse = prefersReduced ? 0 : Math.sin(tick * 0.4) * 5;
+      // Subtle celestial orbit rings (desktop only to save mobile draw calls)
+      if (!isMobile) {
+        const cx = canvas.width * 0.85 + (prefersReduced ? 0 : mouseOffsetX * 0.2);
+        const cy = canvas.height * 0.2 + (prefersReduced ? 0 : mouseOffsetY * 0.2);
+        const orbitPulse = prefersReduced ? 0 : Math.sin(tick * 0.4) * 5;
 
-      ctx.save();
-      ctx.strokeStyle = "rgba(168, 85, 247, 0.038)";
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4, 12]);
+        ctx.save();
+        ctx.strokeStyle = "rgba(168, 85, 247, 0.03)";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 14]);
 
-      // Orbital ellipse 1
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, 340 + orbitPulse, 180 + orbitPulse * 0.5, Math.PI / 6, 0, Math.PI * 2);
-      ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 340 + orbitPulse, 180 + orbitPulse * 0.5, Math.PI / 6, 0, Math.PI * 2);
+        ctx.stroke();
 
-      // Orbital ellipse 2
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, 520 - orbitPulse, 280 - orbitPulse * 0.5, Math.PI / 6, 0, Math.PI * 2);
-      ctx.stroke();
+        ctx.restore();
+      }
 
-      // Lower left coordinate circle
-      ctx.strokeStyle = "rgba(59, 130, 246, 0.028)";
-      ctx.beginPath();
-      ctx.ellipse(canvas.width * 0.1, canvas.height * 0.85, 400 + orbitPulse * 0.6, 220 + orbitPulse * 0.3, -Math.PI / 8, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.restore();
-
-      // Render stars with 3D depth & parallax
+      // Render stars with depth
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
 
         if (!prefersReduced) {
-          // Move according to velocity
           p.x += p.vx;
           p.y += p.vy;
 
-          // Twinkle
           p.alpha += p.pulseSpeed;
-          if (p.alpha > 0.85 || p.alpha < 0.1) {
+          if (p.alpha > 0.8 || p.alpha < 0.1) {
             p.pulseSpeed = -p.pulseSpeed;
           }
 
-          // Screen wrap
           if (p.x < 0) p.x = canvas.width;
           if (p.x > canvas.width) p.x = 0;
           if (p.y < 0) p.y = canvas.height;
           if (p.y > canvas.height) p.y = 0;
         }
 
-        // Apply 3D parallax based on depth factor z and mouse/scroll
-        const drawX = p.x + (prefersReduced ? 0 : mouseOffsetX * p.z);
-        const drawY = p.y + (prefersReduced ? 0 : (mouseOffsetY * p.z - (scrollY * 0.03 * p.z) % canvas.height));
+        const drawX = p.x + (prefersReduced || isMobile ? 0 : mouseOffsetX * p.z);
+        const drawY = p.y + (prefersReduced ? 0 : isMobile ? 0 : (mouseOffsetY * p.z - (scrollY * 0.02 * p.z) % canvas.height));
 
-        // Draw star
         ctx.beginPath();
         ctx.arc(drawX, drawY, p.radius, 0, Math.PI * 2);
         ctx.fillStyle = `${p.color} ${Math.max(0.08, p.alpha)})`;
         ctx.fill();
 
-        // Connect nearby stars with faint cosmic filaments (only within same depth band)
-        for (let j = i + 1; j < particles.length; j++) {
-          const p2 = particles[j];
-          if (Math.abs(p.z - p2.z) > 0.6) continue;
+        // Connect only nearby stars on desktop for optimum performance
+        if (!isMobile && particles.length < 80) {
+          for (let j = i + 1; j < Math.min(i + 8, particles.length); j++) {
+            const p2 = particles[j];
+            if (Math.abs(p.z - p2.z) > 0.5) continue;
 
-          const p2DrawX = p2.x + (prefersReduced ? 0 : mouseOffsetX * p2.z);
-          const p2DrawY = p2.y + (prefersReduced ? 0 : (mouseOffsetY * p2.z - (scrollY * 0.03 * p2.z) % canvas.height));
+            const p2DrawX = p2.x + mouseOffsetX * p2.z;
+            const p2DrawY = p2.y + (mouseOffsetY * p2.z - (scrollY * 0.02 * p2.z) % canvas.height);
 
-          const cdx = drawX - p2DrawX;
-          const cdy = drawY - p2DrawY;
-          const cdist = Math.sqrt(cdx * cdx + cdy * cdy);
+            const cdx = drawX - p2DrawX;
+            const cdy = drawY - p2DrawY;
+            const cdist = Math.sqrt(cdx * cdx + cdy * cdy);
 
-          if (cdist < 90) {
-            ctx.beginPath();
-            ctx.moveTo(drawX, drawY);
-            ctx.lineTo(p2DrawX, p2DrawY);
-            const lineAlpha = (1 - cdist / 90) * 0.045 * Math.min(p.z, p2.z);
-            ctx.strokeStyle = `rgba(147, 197, 253, ${lineAlpha})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
+            if (cdist < 80) {
+              ctx.beginPath();
+              ctx.moveTo(drawX, drawY);
+              ctx.lineTo(p2DrawX, p2DrawY);
+              const lineAlpha = (1 - cdist / 80) * 0.035;
+              ctx.strokeStyle = `rgba(147, 197, 253, ${lineAlpha})`;
+              ctx.lineWidth = 0.5;
+              ctx.stroke();
+            }
           }
         }
       }
@@ -199,23 +199,22 @@ export function BackgroundCanvas() {
   }, []);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden transform-gpu will-change-transform">
       {/* Base deep black */}
       <div className="absolute inset-0 bg-[#050505]" />
 
-      {/* Atmospheric Cosmic Gradients */}
-      <div className="absolute -top-32 -left-32 w-[34rem] h-[34rem] bg-blue-600/15 rounded-full blur-[150px] animate-blob-pulse" />
-      <div className="absolute top-1/4 -right-36 w-[36rem] h-[36rem] bg-purple-600/12 rounded-full blur-[170px] animate-blob-pulse-delayed" />
-      <div className="absolute -bottom-36 left-1/4 w-[38rem] h-[38rem] bg-indigo-600/10 rounded-full blur-[190px] animate-blob-pulse" />
-      <div className="absolute top-2/3 right-1/4 w-[28rem] h-[28rem] bg-pink-600/08 rounded-full blur-[160px] animate-blob-pulse-delayed" />
+      {/* Atmospheric Cosmic Gradients with hardware transform */}
+      <div className="absolute -top-32 -left-32 w-[22rem] sm:w-[34rem] h-[22rem] sm:h-[34rem] bg-blue-600/12 rounded-full blur-[80px] sm:blur-[140px] animate-blob-pulse" />
+      <div className="absolute top-1/4 -right-36 w-[24rem] sm:w-[36rem] h-[24rem] sm:h-[36rem] bg-purple-600/10 rounded-full blur-[90px] sm:blur-[150px] animate-blob-pulse-delayed" />
+      <div className="absolute -bottom-36 left-1/4 w-[24rem] sm:w-[38rem] h-[24rem] sm:h-[38rem] bg-indigo-600/08 rounded-full blur-[100px] sm:blur-[160px] animate-blob-pulse" />
 
       {/* Scientific Engineering Coordinate Grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:64px_64px] opacity-70" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:48px_48px] sm:bg-[size:64px_64px] opacity-60" />
 
       {/* Subtle Noise Texture */}
-      <div className="absolute inset-0 noise-overlay pointer-events-none opacity-30" />
+      <div className="absolute inset-0 noise-overlay pointer-events-none opacity-20" />
 
-      {/* Canvas Layer: Starfield & Orbital Paths */}
+      {/* Canvas Layer: Starfield & Celestial Points */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-80" />
     </div>
   );

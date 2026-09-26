@@ -399,6 +399,18 @@ export function Navbar() {
     };
   }, [pillX, pillWidth]);
 
+  // Throttled scroll listener with requestAnimationFrame for 60-120fps performance
+  const scrollTickRef = useRef(false);
+  const onScrollThrottled = useCallback(() => {
+    if (!scrollTickRef.current) {
+      requestAnimationFrame(() => {
+        handleScroll();
+        scrollTickRef.current = false;
+      });
+      scrollTickRef.current = true;
+    }
+  }, [handleScroll]);
+
   // Scroll listeners with wheel / touch interrupt support
   useEffect(() => {
     // User intentional wheel or touch unlocks navigation immediately
@@ -419,20 +431,20 @@ export function Navbar() {
       }
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("scroll", onScrollThrottled, { passive: true });
     window.addEventListener("wheel", handleUserScrollInterrupt, { passive: true });
     window.addEventListener("touchmove", handleUserScrollInterrupt, { passive: true });
     handleScroll();
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", onScrollThrottled);
       window.removeEventListener("wheel", handleUserScrollInterrupt);
       window.removeEventListener("touchmove", handleUserScrollInterrupt);
       if (scrollEndTimerRef.current) {
         clearTimeout(scrollEndTimerRef.current);
       }
     };
-  }, [handleScroll]);
+  }, [onScrollThrottled, handleScroll]);
 
   // RAF loop for buttery-smooth page scrubbing during drag
   const startScrubLoop = () => {

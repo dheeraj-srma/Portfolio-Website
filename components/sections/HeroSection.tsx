@@ -83,24 +83,24 @@ export function HeroSection() {
       ref={heroRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="relative min-h-[92vh] flex items-center justify-center pt-28 pb-16 px-4 md:px-8 max-w-7xl mx-auto overflow-hidden"
+      className="relative min-h-[88vh] sm:min-h-[92vh] flex items-center justify-center pt-24 sm:pt-28 pb-12 sm:pb-16 px-4 sm:px-6 md:px-8 max-w-7xl mx-auto overflow-hidden"
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch w-full z-10">
         {/* Left Column: Headline, True Positioning, Grounded Statement, CTAs */}
-        <div className="lg:col-span-8 flex flex-col justify-between h-full space-y-6 text-left">
-          {/* Top Status Badge Row (starts at identical vertical level as right telemetry) */}
+        <div className="lg:col-span-8 flex flex-col justify-between h-full space-y-5 sm:space-y-6 text-left">
+          {/* Top Status Badge Row */}
           <div className="h-8 flex items-center">
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-md"
+              className="inline-flex items-center gap-2.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-md"
             >
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span className="text-xs font-mono text-gray-300 tracking-wide">
+              <span className="text-[11px] sm:text-xs font-mono text-gray-300 tracking-wide">
                 Currently building & exploring systems
               </span>
             </motion.div>
@@ -136,10 +136,10 @@ export function HeroSection() {
                   <img
                     src={PERSONAL_INFO.avatarUrl}
                     alt={PERSONAL_INFO.name}
-                    className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover border-2 border-white/20 shadow-2xl group-hover:scale-105 transition-transform"
+                    className="relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 rounded-full object-cover border-2 border-white/20 shadow-2xl group-hover:scale-105 transition-transform"
                   />
                   <span
-                    className="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-emerald-500 border-2 border-[#090D16]"
+                    className="absolute bottom-0 right-0 h-3.5 w-3.5 sm:h-4 sm:w-4 rounded-full bg-emerald-500 border-2 border-[#090D16]"
                     aria-label="Active status"
                   />
                 </motion.a>
@@ -147,26 +147,26 @@ export function HeroSection() {
             </motion.div>
 
             {/* Name, Handle & Roles */}
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+            <div className="space-y-1.5 sm:space-y-2">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
                   {PERSONAL_INFO.name}
                 </h1>
                 <a
                   href={PERSONAL_INFO.githubUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-mono text-blue-400 hover:text-blue-300 transition-colors shadow-sm"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[11px] sm:text-xs font-mono text-blue-400 hover:text-blue-300 transition-colors shadow-sm"
                 >
-                  <GithubIcon size={13} />
+                  <GithubIcon size={12} />
                   <span>@dheeraj-srma</span>
                   <span className="text-gray-600">·</span>
-                  <span className="text-gray-400 text-[11px]">GitHub</span>
+                  <span className="text-gray-400 text-[10px] sm:text-[11px]">GitHub</span>
                 </a>
               </div>
 
               {/* True Positioning: Engineering student. AI builder. Software developer. */}
-              <div className="flex flex-wrap items-center gap-2 text-base sm:text-xl font-medium text-gray-300">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-lg lg:text-xl font-medium text-gray-300">
                 <span className="text-blue-400 font-mono font-semibold">Engineering student.</span>
                 <span className="text-gray-600">·</span>
                 <span className="text-purple-400 font-mono font-semibold">AI builder.</span>
