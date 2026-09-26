@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import {
   Sparkles,
   ChevronLeft,
@@ -23,6 +23,8 @@ import { ProjectModal } from "@/components/common/ProjectModal";
 import { SectionBadge } from "@/components/common/SectionBadge";
 import { Tooltip } from "@/components/common/Tooltip";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+
+const AUTOPLAY_INTERVAL_MS = 5500;
 
 // Pre-cached project configs & visual telemetry (static memory cache)
 const PROJECT_CONFIGS: Record<
@@ -205,7 +207,7 @@ const ProjectCardItem = React.memo(function ProjectCardItem({
         isCenter ? "cursor-default" : "cursor-pointer"
       }`}
     >
-      {/* High Performance Solid Dark Panel (Zero nested backdrop-filter overdraw) */}
+      {/* High Performance Solid Dark Panel */}
       <div
         className={`relative rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 bg-[#0B0B12] border transition-colors duration-200 overflow-hidden ${
           isCenter
@@ -366,62 +368,94 @@ export function ProjectsSection() {
   const [isHovered, setIsHovered] = useState(false);
   const [selectedProject, setSelectedProject] = useState<ProjectData | null>(null);
 
+  const sectionRef = useRef<HTMLElement>(null);
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
+  const autoplayTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
   const prefersReducedMotion = usePrefersReducedMotion();
+  // Viewport observer: only active when the Projects section is actually visible
+  const isSectionInView = useInView(sectionRef, { amount: 0.15 });
 
   const total = PROJECTS.length;
 
-  // Seamless circular navigation
-  const handleNext = useCallback(() => {
-    if (total === 0) return;
-    setActiveIndex((prev) => (prev + 1) % total);
-  }, [total]);
-
-  const handlePrev = useCallback(() => {
-    if (total === 0) return;
-    setActiveIndex((prev) => (prev - 1 + total) % total);
-  }, [total]);
-
-  const handleGoTo = useCallback((index: number) => {
-    if (index >= 0 && index < total) {
-      setActiveIndex(index);
+  // Single source of truth for timer scheduling (resets clock cleanly after manual actions)
+  const scheduleNextAutoplay = useCallback(() => {
+    if (autoplayTimerRef.current) {
+      clearTimeout(autoplayTimerRef.current);
+      autoplayTimerRef.current = null;
     }
-  }, [total]);
 
-  // Autoplay functionality: gently cycles projects, pauses on hover/modal
-  useEffect(() => {
-    if (isHovered || selectedProject !== null || prefersReducedMotion || total <= 1) {
+    // Only schedule if section is in viewport, not hovered, no modal open, and motion is allowed
+    if (
+      !isSectionInView ||
+      isHovered ||
+      selectedProject !== null ||
+      prefersReducedMotion ||
+      total <= 1
+    ) {
       return;
     }
 
-    const timer = setInterval(() => {
-      handleNext();
-    }, 5500);
+    autoplayTimerRef.current = setTimeout(() => {
+      setActiveIndex((prev) => (prev + 1) % total);
+    }, AUTOPLAY_INTERVAL_MS);
+  }, [isSectionInView, isHovered, selectedProject, prefersReducedMotion, total]);
 
-    return () => clearInterval(timer);
-  }, [isHovered, selectedProject, prefersReducedMotion, total, handleNext]);
+  // Handle Manual Navigation (Overrides & resets auto-scroll timer to full duration)
+  const handleManualNext = useCallback(() => {
+    if (total === 0) return;
+    setActiveIndex((prev) => (prev + 1) % total);
+    scheduleNextAutoplay();
+  }, [total, scheduleNextAutoplay]);
 
-  // Keyboard navigation
+  const handleManualPrev = useCallback(() => {
+    if (total === 0) return;
+    setActiveIndex((prev) => (prev - 1 + total) % total);
+    scheduleNextAutoplay();
+  }, [total, scheduleNextAutoplay]);
+
+  const handleManualGoTo = useCallback(
+    (index: number) => {
+      if (index >= 0 && index < total) {
+        setActiveIndex(index);
+        scheduleNextAutoplay();
+      }
+    },
+    [total, scheduleNextAutoplay]
+  );
+
+  // Synchronize autoplay lifecycle when activeIndex, viewport, hover, or modal changes
+  useEffect(() => {
+    scheduleNextAutoplay();
+    return () => {
+      if (autoplayTimerRef.current) {
+        clearTimeout(autoplayTimerRef.current);
+        autoplayTimerRef.current = null;
+      }
+    };
+  }, [activeIndex, isSectionInView, isHovered, selectedProject, prefersReducedMotion, scheduleNextAutoplay]);
+
+  // Keyboard navigation: only active when section is in view
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (selectedProject !== null) return;
+      if (!isSectionInView || selectedProject !== null) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       if (e.key === "ArrowLeft") {
         e.preventDefault();
-        handlePrev();
+        handleManualPrev();
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        handleNext();
+        handleManualNext();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedProject, handleNext, handlePrev]);
+  }, [isSectionInView, selectedProject, handleManualNext, handleManualPrev]);
 
-  // Mobile touch swipe handling: allows horizontal swipe without locking vertical page scroll
+  // Mobile touch swipe handling
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartXRef.current = e.touches[0].clientX;
     touchStartYRef.current = e.touches[0].clientY;
@@ -435,9 +469,9 @@ export function ProjectsSection() {
     // Only trigger if horizontal swipe is dominant and exceeds threshold
     if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
       if (deltaX < 0) {
-        handleNext();
+        handleManualNext();
       } else {
-        handlePrev();
+        handleManualPrev();
       }
     }
 
@@ -459,6 +493,7 @@ export function ProjectsSection() {
   return (
     <section
       id="projects"
+      ref={sectionRef}
       className="py-12 sm:py-18 px-3 sm:px-6 md:px-8 max-w-7xl mx-auto relative z-10 scroll-mt-20 overflow-hidden"
     >
       {/* Section Header */}
@@ -505,7 +540,7 @@ export function ProjectsSection() {
         {/* Edge Navigation Buttons (Left & Right) */}
         <div className="absolute left-0.5 sm:left-3 md:left-6 top-1/2 -translate-y-1/2 z-40">
           <button
-            onClick={handlePrev}
+            onClick={handleManualPrev}
             className="flex h-9 w-9 sm:h-11 sm:w-11 md:h-12 md:w-12 items-center justify-center rounded-full bg-[#0E0E18] hover:bg-[#1A1A28] active:scale-95 border border-white/15 hover:border-white/30 text-gray-300 hover:text-white shadow-[0_4px_20px_rgba(0,0,0,0.8)] transition-all cursor-pointer"
             aria-label="Previous Project"
           >
@@ -515,7 +550,7 @@ export function ProjectsSection() {
 
         <div className="absolute right-0.5 sm:right-3 md:right-6 top-1/2 -translate-y-1/2 z-40">
           <button
-            onClick={handleNext}
+            onClick={handleManualNext}
             className="flex h-9 w-9 sm:h-11 sm:w-11 md:h-12 md:w-12 items-center justify-center rounded-full bg-[#0E0E18] hover:bg-[#1A1A28] active:scale-95 border border-white/15 hover:border-white/30 text-gray-300 hover:text-white shadow-[0_4px_20px_rgba(0,0,0,0.8)] transition-all cursor-pointer"
             aria-label="Next Project"
           >
@@ -536,7 +571,7 @@ export function ProjectsSection() {
               project={project}
               offset={offset}
               onSelect={setSelectedProject}
-              onNavigate={() => handleGoTo(index)}
+              onNavigate={() => handleManualGoTo(index)}
               prefersReducedMotion={prefersReducedMotion}
             />
           ))}
@@ -549,7 +584,7 @@ export function ProjectsSection() {
             {PROJECTS.map((_, i) => (
               <button
                 key={i}
-                onClick={() => handleGoTo(i)}
+                onClick={() => handleManualGoTo(i)}
                 className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
                   i === activeIndex
                     ? "w-6 sm:w-8 md:w-10 bg-gradient-to-r from-blue-500 via-indigo-400 to-purple-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"
